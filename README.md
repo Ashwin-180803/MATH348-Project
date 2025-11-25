@@ -1,5 +1,5 @@
 # MATH348-Project
 
 Running instructions (in bash/terminal):
-venv\Scripts\activate
-python app.py
+\n venv\Scripts\activate
+\n python app.py
