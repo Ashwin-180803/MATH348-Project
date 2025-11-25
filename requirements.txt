@@ -1,0 +1,4 @@
+Flask>=2.0
+sympy>=1.8
+numpy>=1.21
+plotly>=5.0
