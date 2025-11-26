@@ -1,0 +1,72 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+*.log
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+pytest_cache/
+nosetests.xml
+coverage.xml
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# === Flask ===
+# Flask instance folder (contains config, uploads)
+instance/
+# Flask migrations (optional—uncomment if you don't want to track migrations)
+#migrations/
+
+# === Environment variables ===
+.env
+.env.*
+*.env
+
+# === IDE / Editor files ===
+# VSCode
+.vscode/
+# PyCharm
+.idea/
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+# === OS-specific ===
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
