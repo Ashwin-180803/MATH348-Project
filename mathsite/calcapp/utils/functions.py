@@ -1,6 +1,7 @@
 import numpy as np
 import sympy as sp
-from sympy import Matrix, Q
+from sympy import Matrix, Q, sympify
+from sympy import Expr
 from sympy.physics.units.quantities import Quantity
 import math
 import os
@@ -8,62 +9,61 @@ import os
 
 # Curves
 
+
 def numeric_curve_positions(curve_name, params, t0, t1, n):
     t = np.linspace(t0, t1, n)
 
     if curve_name == "line":
         P = np.array(
             [
-                float(params.get("x0", 0.0)),
-                float(params.get("y0", 0.0)),
-                float(params.get("z0", 0.0)),
+                params.get("x0", 0.0),
+                params.get("y0", 0.0),
+                params.get("z0", 0.0),
             ],
             dtype=float,
         )
         Q = np.array(
             [
-                float(params.get("x1", 1.0)),
-                float(params.get("y1", 0.0)),
-                float(params.get("z1", 0.0)),
+                params.get("x1", 1.0),
+                params.get("y1", 0.0),
+                params.get("z1", 0.0),
             ],
             dtype=float,
         )
         R = P[np.newaxis, :] + np.outer(t, (Q - P))
 
     elif curve_name == "circle":
-        a = float(params.get("a", 1.0))
+        a = params.get("a", 1.0)
         R = np.column_stack((a * np.cos(t), a * np.sin(t), np.zeros_like(t)))
 
     elif curve_name == "ellipse":
-        a = float(params.get("a", 2.0))
-        b = float(params.get("b", 1.0))
+        a = params.get("a", 2.0)
+        b = params.get("b", 1.0)
         R = np.column_stack((a * np.cos(t), b * np.sin(t), np.zeros_like(t)))
 
     elif curve_name == "helix":
-        a = float(params.get("a", 1.0))
-        b = float(params.get("b", 0.2))
+        a = params.get("a", 1.0)
+        b = params.get("b", 0.2)
         R = np.column_stack((a * np.cos(t), a * np.sin(t), b * t))
 
     elif curve_name == "cycloid":
-        a = float(params.get("a", 1.0))
+        a = params.get("a", 1.0)
         R = np.column_stack(
             (a * (t - np.sin(t)), a * (1 - np.cos(t)), np.zeros_like(t))
         )
 
     elif curve_name == "twisted_cubic":
-        R = np.column_stack((t, t ** 2, t ** 3))
+        R = np.column_stack((t, t**2, t**3))
 
     elif curve_name == "catenary":
-        C = float(params.get("C", 1.0))
+        C = params.get("C", 1.0)
         R = np.column_stack((t, C * np.cosh(t / C), np.zeros_like(t)))
 
     elif curve_name == "hyperbola":
         R = np.column_stack((np.cosh(t), np.sinh(t), np.zeros_like(t)))
 
     elif curve_name == "tractrix":
-        R = np.column_stack(
-            (t - np.tanh(t), 1.0 / np.cosh(t), np.zeros_like(t))
-        )
+        R = np.column_stack((t - np.tanh(t), 1.0 / np.cosh(t), np.zeros_like(t)))
 
     elif curve_name == "custom_curve":
         exprs = params.get("exprs", {})
@@ -85,52 +85,13 @@ def numeric_curve_positions(curve_name, params, t0, t1, n):
     return t, R
 
 
-def derivatives_numeric(R, t):
-    dt = np.gradient(t)
-    Rp = np.gradient(R, axis=0) / dt[:, np.newaxis]
-    Rpp = np.gradient(Rp, axis=0) / dt[:, np.newaxis]
-    Rppp = np.gradient(Rpp, axis=0) / dt[:, np.newaxis]
-    return Rp, Rpp, Rppp
-
-
-def curvature_torsion_from_R(R, t):
-    Rp, Rpp, Rppp = derivatives_numeric(R, t)
-    cross = np.cross(Rp, Rpp)
-    cross_norm = np.linalg.norm(cross, axis=1)
-    Rp_norm = np.linalg.norm(Rp, axis=1)
-
-    with np.errstate(divide="ignore", invalid="ignore"):
-        curvature = cross_norm / (Rp_norm ** 3)
-
-    triple = np.einsum("ij,ij->i", cross, Rppp)
-    denom = cross_norm ** 2
-
-    with np.errstate(divide="ignore", invalid="ignore"):
-        torsion = triple / denom
-
-    curvature = [
-        None if (not np.isfinite(x)) else float(x) for x in curvature
-    ]
-    torsion = [None if (not np.isfinite(x)) else float(x) for x in torsion]
-    return curvature, torsion
-
-
-def arc_length_numeric(R, t):
-    Rp = np.gradient(R, axis=0) / np.gradient(t)[:, np.newaxis]
-    speed = np.linalg.norm(Rp, axis=1)
-    dt = np.diff(t)
-    if len(dt) == 0:
-        return [0.0]
-    cum = np.zeros_like(speed)
-    cum[1:] = np.cumsum((speed[:-1] + speed[1:]) * 0.5 * dt)
-    return cum.tolist()
-
-
 # Surfaces
+
 
 def get_surface_expressions(surface, params):
     if surface == "sphere":
-        r = float(params.get("r", 1.0))
+        r = params.get("r", 1.0)
+
         return {
             "x": f"{r}*sin(u)*cos(v)",
             "y": f"{r}*sin(u)*sin(v)",
@@ -138,8 +99,8 @@ def get_surface_expressions(surface, params):
         }
 
     if surface == "torus":
-        R = float(params.get("R", 1.0))
-        r = float(params.get("r", 0.4))
+        R = params.get("R", 1.0)
+        r = params.get("r", 0.4)
         return {
             "x": f"({R} + {r}*cos(u))*cos(v)",
             "y": f"({R} + {r}*cos(u))*sin(v)",
@@ -147,7 +108,7 @@ def get_surface_expressions(surface, params):
         }
 
     if surface == "paraboloid":
-        a = float(params.get("a", 1.0))
+        a = params.get("a", 1.0)
         return {
             "x": "u*cos(v)",
             "y": "u*sin(v)",
@@ -181,54 +142,6 @@ def mesh_from_parametric_surfaces(exprs, u_range, v_range, nu, nv):
 
     return U, V, X, Y, Z
 
-
-def compute_first_second_forms_symbolic(exprs):
-    u, v = sp.symbols("u v")
-    X = Matrix(
-        [
-            sp.sympify(exprs["x"]),
-            sp.sympify(exprs["y"]),
-            sp.sympify(exprs["z"]),
-        ]
-    )
-    X_u = X.diff(u)
-    X_v = X.diff(v)
-
-    E = sp.simplify(X_u.dot(X_u))
-    F = sp.simplify(X_u.dot(X_v))
-    G = sp.simplify(X_v.dot(X_v))
-
-    n = X_u.cross(X_v)
-    n_unit = sp.simplify(n / sp.sqrt(n.dot(n)))
-
-    X_uu = X_u.diff(u)
-    X_uv = X_u.diff(v)
-    X_vv = X_v.diff(v)
-
-    L = sp.simplify(n_unit.dot(X_uu))
-    M = sp.simplify(n_unit.dot(X_uv))
-    N = sp.simplify(n_unit.dot(X_vv))
-
-    I = Matrix([[E, F], [F, G]])
-    II = Matrix([[L, M], [M, N]])
-    Iinv = sp.simplify(I.inv())
-    S = sp.simplify(Iinv * II)
-
-    H = sp.simplify((S[0, 0] + S[1, 1]) / 2)
-    K = sp.simplify(S.det())
-
-    return {
-        "E": E,
-        "F": F,
-        "G": G,
-        "L": L,
-        "M": M,
-        "N": N,
-        "n": n_unit,
-        "H": H,
-        "K": K,
-        "S": S,
-    }
 
 # Functions
 def api_compute():
@@ -276,16 +189,20 @@ def symbolic_formula_for(curve, params):
     t = sp.symbols("t")
 
     if curve == "line":
-        P = sp.Matrix([
-            params.get("x0", 0),
-            params.get("y0", 0),
-            params.get("z0", 0),
-        ])
-        Q = sp.Matrix([
-            params.get("x1", 1),
-            params.get("y1", 0),
-            params.get("z1", 0),
-        ])
+        P = sp.Matrix(
+            [
+                params.get("x0", 0),
+                params.get("y0", 0),
+                params.get("z0", 0),
+            ]
+        )
+        Q = sp.Matrix(
+            [
+                params.get("x1", 1),
+                params.get("y1", 0),
+                params.get("z1", 0),
+            ]
+        )
         expr = P + t * (Q - P)
 
     elif curve == "circle":
@@ -323,55 +240,32 @@ def symbolic_formula_for(curve, params):
     return expr
 
 
-
 def find_constants(parametrization, parameters):
     """
     Identify constants in a given parametrization
     """
+    if not isinstance(parameters, list):
+        parameters = [parameters]
+
     # Collect all symbols that are variables
     param_set = set(parameters)
 
-    quantity_set = set().union(*(expr.atoms(Quantity) for expr in parametrization))
+    quantity_set = set()
+    symbol_set = set()
+    constants = []
+    for expr in parametrization:
+        if not isinstance(expr, Expr):
+            continue  # skip ints, floats, etc.
 
-    symbol_set = set().union(*(expr.free_symbols for expr in parametrization))
+        quantity_set |= expr.atoms(Quantity)
+        symbol_set |= expr.free_symbols
 
-    # True constants = quantities + non-variable symbols
-    constants = quantity_set | (symbol_set - param_set)
+    for symbol in symbol_set:
+        if str(symbol) not in [str(q) for q in param_set]:
+            constant = sp.Symbol(str(symbol), real=True, positive=True)
+            constants.append(constant)
 
     return constants
-
-
-def compute_unit_normal_vector(parametrization, parameters):
-    """
-    Calculate the unit normal vector of a surface given its parametrization.
-
-    Parameters:
-    parametrization : list
-        A list of sp expressions representing the parametrization of the surface.
-    parameters : list
-        A list of sp symbols representing the parameters of the surface.
-
-    Returns:
-    Matrix
-        The unit normal vector as a sp Matrix.
-    """
-    u, v = parameters
-
-    # Step 1 - Compute the partial derivatives
-    X_u = Matrix([sp.diff(coord, u) for coord in parametrization])
-    X_v = Matrix([sp.diff(coord, v) for coord in parametrization])
-
-    # Step 2 - Compute the normal vector using cross product
-    normal_vector = X_u.cross(X_v)
-
-    # Step 3 - Normalize the normal vector to get the unit normal vector
-    magnitude = normal_vector.norm()
-    unit_normal = normal_vector / magnitude
-
-    # Step 4 - Simplify
-    unit_normal = sp.simplify(unit_normal)
-
-    return unit_normal
 
 
 def trig_simplify_all(expr):
@@ -418,34 +312,111 @@ def trig_simplify_all(expr):
     return best
 
 
-def compute_arc_length(parametrization, parameter, bounds):
+def true_simplify(expr):
     """
-    Calculate the arc length element of a curve given its parametrization.
+    You would think something like this is unnecessary in 2025 but alas
+    """
+    expr = sp.simplify(expr)
+    syms = [s for s in expr.free_symbols]
+    new_syms = {s: sp.Symbol(str(s), real=True, positive=True) for s in syms}
+
+    expr_new = expr.subs(new_syms)
+    expr_new = sp.simplify(expr_new)
+    # expr_new = trig_simplify_all(expr_new)
+    expr_new = expr_new.replace(lambda x: isinstance(x, sp.Abs), lambda x: x.args[0])
+
+    return sp.simplify(expr_new)
+
+
+def compute_unit_normal_vector(parametrization, parameters):
+    """
+    Calculate the unit normal vector of a surface given its parametrization.
 
     Parameters:
     parametrization : list
-        A list of sp expressions representing the parametrization of the curve.
+        A list of sp expressions representing the parametrization of the surface.
+    parameters : list
+        A list of sp symbols representing the parameters of the surface.
+
+    Returns:
+    Matrix
+        The unit normal vector as a sp Matrix.
+    """
+    parameters_string = " ".join([str(p) for p in parameters])
+    u, v = sp.symbols(parameters_string, real=True)
+    constants = [
+        sp.Symbol(str(constant), real=True, positive=True)
+        for constant in find_constants(parametrization, parameters)
+    ]
+
+    if len(constants) > 0:
+        for const in constants:
+            parametrization = [
+                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
+            ]
+
+    # Step 1 - Compute the partial derivatives
+    X_u = Matrix([sp.diff(coord, u) for coord in parametrization])
+    X_v = Matrix([sp.diff(coord, v) for coord in parametrization])
+
+    # Step 2 - Compute the normal vector using cross product
+    normal_vector = X_u.cross(X_v)
+
+    # Step 3 - Normalize the normal vector to get the unit normal vector
+    magnitude = normal_vector.norm()
+    unit_normal = normal_vector / magnitude
+
+    # Step 4 - Simplify
+    unit_normal = true_simplify(unit_normal)
+
+    return unit_normal
+
+
+def compute_arc_length(parametrization, parameter, bounds):
+    """
+    Calculate the arc length of a curve given its parametrization
+
+    Parameters:
+    parametrization : list
+        A list of sp expressions representing the parametrization of the curve
     parameter : sp symbol
-        A sp symbol representing the parameter of the curve.
-    bounds : dict
-        A dictionary specifying the integration bounds for the parameter.
+        A sp symbol representing the parameter of the curve
+    bounds : list
+        A list specifying the integration bounds for the parameter
     Returns:
     sp expression
-        The arc length element ds.
+        The arc length ds
     """
-    t = parameter
+    t = sp.symbols(str(parameter), real=True)
+    tau = sp.Dummy(real=True)
+
+    constants = [
+        sp.Symbol(str(constant), real=True, positive=True)
+        for constant in find_constants(parametrization, parameter)
+    ]
+
+    if len(constants) > 0:
+        for const in constants:
+            parametrization = [
+                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
+            ]
+
+    parametrization_tau = [coord.subs(t, tau) for coord in parametrization]
 
     # Step 1 - Compute the derivative of the parametrization
-    X_t = Matrix([sp.diff(coord, t) for coord in parametrization])
+    X_tau = Matrix([sp.diff(coord, tau) for coord in parametrization_tau])
 
     # Step 2 - Compute the magnitude of the derivative
-    magnitude = X_t.norm()
+    magnitude = X_tau.norm()
 
     # Step 3 - Simplify
-    magnitude = trig_simplify_all(magnitude)
+    # magnitude = true_simplify(magnitude)
 
     # Step 4 - Integrate to get the arc length
-    arc_length = sp.integrate(magnitude, (t, bounds[t][0], bounds[t][1]))
+    arc_length = sp.integrate(magnitude, (tau, bounds[0], bounds[1]))
+
+    # Step 5 - Simplify again
+    arc_length = true_simplify(arc_length)
 
     return arc_length
 
@@ -459,24 +430,45 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
         A list of sp expressions representing the parametrization of the curve.
     parameter : sp symbol
         A sp symbol representing the parameter of the curve.
-    bounds : dict
-        A dictionary specifying the integration bounds for the parameter.
+    bounds : list
+        A list specifying the integration bounds for the parameter.
     Returns:
     sp expression
         The arc length element ds.
     """
-    t = parameter
+    t = sp.symbols(str(parameter), real=True)
+    constants = [
+        sp.Symbol(str(constant), real=True, positive=True)
+        for constant in find_constants(parametrization, parameter)
+    ]
+
+    if len(constants) > 0:
+        for const in constants:
+            parametrization = [
+                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
+            ]
 
     # Step 1 - Get arc length
     arc_length = compute_arc_length(parametrization, parameter, bounds)
 
+    if len(constants) > 0:
+        arc_length = arc_length.subs(
+            (arc_length.free_symbols - set(constants)).pop(), t
+        )
+    elif len(arc_length.free_symbols) == 1:
+        arc_length = arc_length.subs(arc_length.free_symbols.pop(), t)
+
     # Step 2 - Solve for t in terms of s
     s = sp.symbols("s", real=True)
     equation = sp.Eq(arc_length, s)
+
     t_in_terms_of_s = sp.solve(equation, t)[0]
 
     # Step 3 - Substitute t back into the parametrization
     reparametrized_curve = [coord.subs(t, t_in_terms_of_s) for coord in parametrization]
+
+    # Step 4 - Simplify
+    reparametrized_curve = [true_simplify(coord) for coord in reparametrized_curve]
 
     return reparametrized_curve
 
@@ -495,7 +487,17 @@ def compute_first_fundamental_form(parametrization, parameters):
         Matrix
         The first fundamental form matrix.
     """
-    u, v = parameters
+    u, v = sp.symbols(" ".join([str(p) for p in parameters]), real=True)
+    constants = [
+        sp.Symbol(str(constant), real=True, positive=True)
+        for constant in find_constants(parametrization, parameters)
+    ]
+
+    if len(constants) > 0:
+        for const in constants:
+            parametrization = [
+                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
+            ]
 
     # Step 1 - Compute the partial derivatives
     X_u = Matrix([sp.diff(coord, u) for coord in parametrization])
@@ -507,9 +509,9 @@ def compute_first_fundamental_form(parametrization, parameters):
     G = X_v.dot(X_v)
 
     # Step 3 - Simplify
-    E = sp.simplify(E)
-    F = sp.simplify(F)
-    G = sp.simplify(G)
+    E = true_simplify(E)
+    F = true_simplify(F)
+    G = true_simplify(G)
 
     # Step 4 - Construct the first fundamental form matrix
     first_fundamental_form_matrix = Matrix([[E, F], [F, G]])
@@ -604,37 +606,36 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
 
     # Step 1 - First derivative (velocity) and simplify
     X_t = Matrix([sp.diff(coord, t) for coord in coords])
-    X_t = sp.simplify(X_t)
+    X_t = true_simplify(X_t)
 
     # Step 2 - Unit tangent vector T
     X_t_norm = sp.sqrt(X_t.dot(X_t))
     T = X_t / X_t_norm
-    T = sp.simplify(T)
+    T = true_simplify(T)
 
     # Step 3 - Second derivative (acceleration)
     X_tt = Matrix([sp.diff(coord, t) for coord in X_t])
-    X_tt = sp.simplify(X_tt)
+    X_tt = true_simplify(X_tt)
 
     # Step 4 - Curvature kappa
     kappa = (X_t.cross(X_tt)).norm() / (X_t_norm**3)
-    kappa = sp.simplify(kappa)
+    kappa = true_simplify(kappa)
 
     # Step 5 - Normal vector N
     T_t = Matrix([sp.diff(comp, t) for comp in T])
     T_t_norm = sp.sqrt(T_t.dot(T_t))
-    N = sp.simplify(T_t / T_t_norm)
+    N = true_simplify(T_t / T_t_norm)
 
     # Step 6 - Binormal B
-    B = sp.simplify(T.cross(N))
+    B = true_simplify(T.cross(N))
 
     # Step 7 - Torsion tau
     X_ttt = Matrix([sp.diff(coord, t) for coord in X_tt])
-    tau = (X_t.cross(X_tt)).dot(X_ttt) / (X_t.cross(X_tt)).norm()**2
-    tau = sp.simplify(tau)
+    tau = (X_t.cross(X_tt)).dot(X_ttt) / (X_t.cross(X_tt)).norm() ** 2
+    tau = true_simplify(tau)
 
     frenet_serret_dict = {"T": T, "N": N, "B": B, "kappa": kappa, "tau": tau}
     return frenet_serret_dict
-
 
 
 def compute_second_fundamental_form(parametrization, parameters):
@@ -651,7 +652,17 @@ def compute_second_fundamental_form(parametrization, parameters):
     Matrix
         The second fundamental form matrix.
     """
-    u, v = parameters
+    u, v = sp.symbols(" ".join([str(p) for p in parameters]), real=True)
+    constants = [
+        sp.Symbol(str(constant), real=True, positive=True)
+        for constant in find_constants(parametrization, parameters)
+    ]
+
+    if len(constants) > 0:
+        for const in constants:
+            parametrization = [
+                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
+            ]
 
     # Step 1 - Compute the partial derivatives
     X_u = Matrix([sp.diff(coord, u) for coord in parametrization])
@@ -669,9 +680,9 @@ def compute_second_fundamental_form(parametrization, parameters):
     N_coeff = N.dot(X_vv)
 
     # Step 4 - Simplify
-    L = sp.simplify(L)
-    M = sp.simplify(M)
-    N_coeff = sp.simplify(N_coeff)
+    L = true_simplify(L)
+    M = true_simplify(M)
+    N_coeff = true_simplify(N_coeff)
 
     # Step 5 - Construct the second fundamental form matrix
     second_fundamental_form_matrix = Matrix([[L, M], [M, N_coeff]])
@@ -710,7 +721,7 @@ def compute_shape_operator(parametrization, parameters):
     shape_operator_matrix = I_inv * second_fundamental_form_matrix
 
     # Step 5 - Simplify
-    shape_operator_matrix = sp.simplify(shape_operator_matrix)
+    shape_operator_matrix = true_simplify(shape_operator_matrix)
 
     return shape_operator_matrix
 
@@ -736,7 +747,7 @@ def compute_mean_curvature(parametrization, parameters):
     H = (shape_operator_matrix[0, 0] + shape_operator_matrix[1, 1]) / 2
 
     # Step 3 - Simplify
-    H = sp.simplify(H)
+    H = true_simplify(H)
 
     return H
 
@@ -762,7 +773,7 @@ def compute_gaussian_curvature(parametrization, parameters):
     K = shape_operator_matrix.det()
 
     # Step 3 - Simplify
-    K = sp.simplify(K)
+    K = true_simplify(K)
 
     return K
 
@@ -825,7 +836,7 @@ def compute_christoffel_symbols(parametrization, parameters):
 
     # Step 5 - Simplify
     for key, expr in gamma.items():
-        gamma[key] = sp.simplify(expr[0])
+        gamma[key] = true_simplify(expr[0])
 
     return gamma
 
@@ -876,8 +887,8 @@ def compute_codazzi_equations(parametrization, parameters):
     )
 
     # Step 4 - Simplify
-    first_codazzi_eq = sp.simplify(first_codazzi_eq)
-    second_codazzi_eq = sp.simplify(second_codazzi_eq)
+    first_codazzi_eq = true_simplify(first_codazzi_eq)
+    second_codazzi_eq = true_simplify(second_codazzi_eq)
 
     L_v = sp.diff(L, parameters[1])
     M_u = sp.diff(M, parameters[0])
@@ -969,14 +980,14 @@ def compute_gauss_equations(parametrization, parameters):
     )
 
     # Step 6 - Simplify
-    first_gauss_eq = sp.simplify(first_gauss_eq)
-    second_gauss_eq = sp.simplify(second_gauss_eq)
-    third_gauss_eq = sp.simplify(third_gauss_eq)
-    fourth_gauss_eq = sp.simplify(fourth_gauss_eq)
+    first_gauss_eq = true_simplify(first_gauss_eq)
+    second_gauss_eq = true_simplify(second_gauss_eq)
+    third_gauss_eq = true_simplify(third_gauss_eq)
+    fourth_gauss_eq = true_simplify(fourth_gauss_eq)
 
     K_numerator = L * N - M**2
     K_denominator = E * G - F**2
-    K = sp.simplify(K_numerator / K_denominator)
+    K = true_simplify(K_numerator / K_denominator)
 
     return (
         first_gauss_eq,
