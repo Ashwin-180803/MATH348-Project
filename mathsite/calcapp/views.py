@@ -108,21 +108,22 @@ def compute(request):
             params = data.get("params", {})
             compute_symbolic_flag = bool(data.get("compute_symbolic", False))
             symbolic_quantity = data.get("symbolic_quantity", "")
-            
+
             nu = int(params.get("nu", 60))
             nv = int(params.get("nv", 60))
             u0 = float(params.get("u0", 0.0))
             u1 = float(params.get("u1", 2 * 3.141592653589793))
             v0 = float(params.get("v0", 0.0))
             v1 = float(params.get("v1", 2 * 3.141592653589793))
-            
+
             exprs_num = functions.get_surface_expressions(surface, params)
+            
             U, V, X, Y, Z = functions.mesh_from_parametric_surfaces(
                 exprs_num, (u0, u1), (v0, v1), nu, nv
             )
-
-            symbolic = {}
             
+            symbolic = {}
+
             if compute_symbolic_flag and symbolic_quantity:
                 u, v = sp.symbols("u v", real=True)
 
@@ -131,6 +132,7 @@ def compute(request):
                     sp.sympify(exprs_num["y"]),
                     sp.sympify(exprs_num["z"]),
                 ]
+                
                 parameters = (u, v)
                 # Parse input
                 for i in range(len(param_list)):
@@ -141,7 +143,7 @@ def compute(request):
                         I = functions.compute_first_fundamental_form(
                             param_list, parameters
                         )
-                        
+
                         E = I[0, 0]
                         F = I[0, 1]
                         G = I[1, 1]

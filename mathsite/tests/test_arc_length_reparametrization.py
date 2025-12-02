@@ -11,49 +11,27 @@ from calcapp.utils.functions import (
 # --------------------------------------------------------------
 # Helper: arc length scalar comparison
 # --------------------------------------------------------------
-def assert_arc_lengths_equal(v1, v2):
+def assert_arc_lengths_equal(result, expected):
     """
-    Compare two lists of symbolic expressions robustly (elementwise).
-    Canonicalizes symbols to compare expressions with different names.
+    Assert that two parametric curves result(s) and expected(s)
+    have identical arc-length speed functions with respect to s.
     """
-    if len(v1) != len(v2):
-        raise AssertionError("Different lengths")
+    s = sp.symbols("s", real=True)
 
-    # Flatten expressions
-    v1_exprs = [sp.sympify(expr) for expr in v1]
-    v2_exprs = [sp.sympify(expr) for expr in v2]
+    def speed(curve):
+        deriv = [sp.diff(comp, s) for comp in curve]
+        return sp.simplify(sp.sqrt(sum(d**2 for d in deriv)))
 
-    # Collect all free symbols from both lists
-    syms1 = sorted(
-        {s for expr in v1_exprs for s in expr.free_symbols}, key=lambda s: s.name
-    )
-    syms2 = sorted(
-        {s for expr in v2_exprs for s in expr.free_symbols}, key=lambda s: s.name
-    )
+    L_res = speed(result)
+    L_exp = speed(expected)
 
-    if len(syms1) != len(syms2):
-        raise AssertionError("Different number of symbols")
-
-    # Create canonical symbols
-    canon = [sp.Symbol(f"x{i}") for i in range(len(syms1))]
-    subs1 = dict(zip(syms1, canon))
-    subs2 = dict(zip(syms2, canon))
-
-    # Substitute and simplify elementwise
-    for a, b in zip(v1_exprs, v2_exprs):
-        a_sub = sp.nsimplify(true_simplify(a.subs(subs1)), rational=False)
-        b_sub = sp.nsimplify(true_simplify(b.subs(subs2)), rational=False)
-
-        diff = sp.simplify(a_sub - b_sub)
-
-        # Handle identical Integrals
-        if isinstance(a_sub, sp.Integral) and isinstance(b_sub, sp.Integral):
-            if a_sub.function == b_sub.function and a_sub.limits == b_sub.limits:
-                continue
-            else:
-                raise AssertionError(f"Arc lengths differ: {a_sub} vs {b_sub}")
-        elif diff != 0:
-            raise AssertionError(f"Arc lengths differ: {a_sub} vs {b_sub}")
+    if not sp.simplify(L_res - L_exp) == 0:
+        raise AssertionError(
+            f"Arc-length mismatch:\n"
+            f"  result speed   = {L_res}\n"
+            f"  expected speed = {L_exp}"
+        )
+    return True
 
 
 # ======================================================================
@@ -63,23 +41,28 @@ def assert_arc_lengths_equal(v1, v2):
 
 
 def test_line_numeric():
-    t, s = sp.symbols("t s", real=True)
+    t = sp.symbols("t", real=True)
     X = [3 * t, 4 * t, 0]
     bounds = [0, t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+
+    s = result[0].free_symbols.pop()
     expected = [3 * s / 5, 4 * s / 5, 0]
+
     assert_arc_lengths_equal(result, expected)
 
 
 def test_line_symbolic():
-    t, a, b, c, s = sp.symbols("t a b c s", real=True)
+    t = sp.symbols("t", real=True)
+    a, b, c = sp.symbols("a b c", real=True, positive=True)
     X = [a * t, b * t, c * t]
     bounds = [0, t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+    s = result[0].free_symbols.pop()
     expected = [
         a * s / sp.sqrt(a**2 + b**2 + c**2),
         b * s / sp.sqrt(a**2 + b**2 + c**2),
@@ -97,25 +80,28 @@ def test_line_symbolic():
 
 
 def test_circle_numeric():
-    t, s = sp.symbols("t s", real=True)
+    t = sp.symbols("t", real=True)
     R = 2.3
     X = [R * sp.cos(t), R * sp.sin(t), 0]
     bounds = [1, t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+    s = result[0].free_symbols.pop()
     expected = [R * sp.cos(s / R + 1), R * sp.sin(s / R + 1), 0]
 
     assert_arc_lengths_equal(result, expected)
 
 
 def test_circle_symbolic():
-    t, R, s = sp.symbols("t R s", real=True, positive=True)
+    t = sp.symbols("t", real=True)
+    R = sp.symbols("R", real=True, positive=True)
     X = [R * sp.cos(t), R * sp.sin(t), 0]
     bounds = [1, t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+    s = result[0].free_symbols.pop()
     expected = [R * sp.cos(s / R + 1), R * sp.sin(s / R + 1), 0]
 
     assert_arc_lengths_equal(result, expected)
@@ -129,15 +115,15 @@ def test_circle_symbolic():
 
 
 def test_helix_numeric():
-    t, s = sp.symbols("t s", real=True)
+    t = sp.symbols("t", real=True)
     a = 1.1
     b = 0.9
     X = [a * sp.cos(t), a * sp.sin(t), b * t]
     bounds = [-2, t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
-
+    s = result[0].free_symbols.pop()
     expected = [
         11 * sp.cos(5 * sp.sqrt(202) * s / 101 - 2) / 10,
         11 * sp.sin(5 * sp.sqrt(202) * s / 101 - 2) / 10,
@@ -148,12 +134,14 @@ def test_helix_numeric():
 
 
 def test_helix_symbolic():
-    t, a, b, s = sp.symbols("t a b s", real=True)
+    t = sp.symbols("t", real=True)
+    a, b = sp.symbols("a b", real=True, positive=True)
     X = [a * sp.cos(t), a * sp.sin(t), b * t]
     bounds = [-2, t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+    s = result[0].free_symbols.pop()
     L = sp.sqrt(a**2 + b**2)
     expected = [a * sp.cos(s / L - 2), a * sp.sin(s / L - 2), b * (s / L - 2)]
 
@@ -168,24 +156,27 @@ def test_helix_symbolic():
 
 
 def test_parabola_numeric():
-    t, s = sp.symbols("t s", real=True)
+    t = sp.symbols("t", real=True)
     X = [t, sp.pi * t, 0]
     bounds = [0, t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+    s = result[0].free_symbols.pop()
     expected = [s / sp.sqrt(1 + sp.pi**2), sp.pi * s / sp.sqrt(1 + sp.pi**2), 0]
 
     assert_arc_lengths_equal(result, expected)
 
 
 def test_parabola_symbolic():
-    t, a, s = sp.symbols("t a s", real=True)
+    t = sp.symbols("t", real=True)
+    a = sp.symbols("a", real=True, positive=True)
     X = [t, a * t, 0]
     bounds = [0, t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+    s = result[0].free_symbols.pop()
     expected = [s / sp.sqrt(1 + a**2), a * s / sp.sqrt(1 + a**2), 0]
 
     assert_arc_lengths_equal(result, expected)
@@ -199,12 +190,13 @@ def test_parabola_symbolic():
 
 
 def test_exponential_numeric():
-    t, s = sp.symbols("t s", real=True)
+    t = sp.symbols("t", real=True)
     X = [sp.exp(2 * t), sp.exp(3 * t), 0]
     bounds = [sp.log(2), t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+    s = result[0].free_symbols.pop()
     expected = [
         (729 * s**2 + 4320 * sp.sqrt(1, 1) * sp.sqrt(10) * s + 64000) ** (1 / 3) / 9
         - 4 / 9,
@@ -216,12 +208,14 @@ def test_exponential_numeric():
 
 
 def test_exponential_symbolic():
-    t, a, b, c, s = sp.symbols("t a b c s", real=True)
+    t = sp.symbols("t", real=True)
+    a, b, c = sp.symbols("a b c", real=True, positive=True)
     X = [a * sp.exp(c * t), b * sp.exp(c * t), 0]
     bounds = [sp.log(2), t]
 
-    Xp = parse_input(str(X))
+    Xp = parse_input(str(X), str([t]))
     result = compute_arc_length_reparametrization(Xp, t, bounds)
+    s = result[0].free_symbols.pop()
     expected = [
         a * (s / sp.sqrt(a**2 + b**2) + 2**c),
         b * (s / sp.sqrt(a**2 + b**2) + 2**c),

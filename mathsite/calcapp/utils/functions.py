@@ -1,8 +1,8 @@
 import numpy as np
 import sympy as sp
-from sympy import Matrix, Q, sympify
-from sympy import Expr
+from sympy import Matrix, Q, integrate, sympify, Expr, assuming
 from sympy.physics.units.quantities import Quantity
+from func_timeout import func_timeout, FunctionTimedOut
 import math
 import os
 
@@ -137,48 +137,11 @@ def mesh_from_parametric_surfaces(exprs, u_range, v_range, nu, nv):
         X = np.array(fx(U, V), dtype=float)
         Y = np.array(fy(U, V), dtype=float)
         Z = np.array(fz(U, V), dtype=float)
+
     except Exception as e:
         raise ValueError(f"Error evaluating surface expressions: {e}")
 
     return U, V, X, Y, Z
-
-
-# Functions
-def api_compute():
-    data = request.json
-    curve = data.get("curve")
-    params = data.get("params", {})
-    t0 = float(data.get("t0", 0.0))
-    t1 = float(data.get("t1", 2 * math.pi))
-    n = int(data.get("n", 400))
-    try:
-        t, R = numeric_curve_positions(curve, params, t0, t1, n)
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 400
-
-    curvature, torsion = curvature_torsion_from_R(R, t)
-    arclen = arc_length_numeric(R, t)
-
-    xs = R[:, 0].tolist()
-    ys = R[:, 1].tolist()
-    zs = R[:, 2].tolist()
-
-    sym_formula = symbolic_formula_for(curve, params)
-
-    return jsonify(
-        {
-            "ok": True,
-            "curve": curve,
-            "t": t.tolist(),
-            "x": xs,
-            "y": ys,
-            "z": zs,
-            "curvature": curvature,
-            "torsion": torsion,
-            "arc_length": arclen,
-            "symbolic": sym_formula,
-        }
-    )
 
 
 def symbolic_formula_for(curve, params):
@@ -342,32 +305,24 @@ def compute_unit_normal_vector(parametrization, parameters):
     Matrix
         The unit normal vector as a sp Matrix.
     """
-    parameters_string = " ".join([str(p) for p in parameters])
-    u, v = sp.symbols(parameters_string, real=True)
-    constants = [
-        sp.Symbol(str(constant), real=True, positive=True)
-        for constant in find_constants(parametrization, parameters)
-    ]
-
-    if len(constants) > 0:
-        for const in constants:
-            parametrization = [
-                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
-            ]
 
     # Step 1 - Compute the partial derivatives
-    X_u = Matrix([sp.diff(coord, u) for coord in parametrization])
-    X_v = Matrix([sp.diff(coord, v) for coord in parametrization])
+    X_u = Matrix([sp.diff(coord, parameters[0]) for coord in parametrization])
+    X_v = Matrix([sp.diff(coord, parameters[1]) for coord in parametrization])
 
     # Step 2 - Compute the normal vector using cross product
     normal_vector = X_u.cross(X_v)
 
     # Step 3 - Normalize the normal vector to get the unit normal vector
     magnitude = normal_vector.norm()
-    unit_normal = normal_vector / magnitude
+
+    magnitude = sp.simplify(magnitude)
+    magnitude_no_abs = magnitude.replace(sp.Abs, lambda x: x)
+
+    unit_normal = normal_vector / magnitude_no_abs
 
     # Step 4 - Simplify
-    unit_normal = true_simplify(unit_normal)
+    unit_normal = sp.simplify(unit_normal)
 
     return unit_normal
 
@@ -387,36 +342,31 @@ def compute_arc_length(parametrization, parameter, bounds):
     sp expression
         The arc length ds
     """
-    t = sp.symbols(str(parameter), real=True)
-    tau = sp.Dummy(real=True)
-
-    constants = [
-        sp.Symbol(str(constant), real=True, positive=True)
-        for constant in find_constants(parametrization, parameter)
-    ]
-
-    if len(constants) > 0:
-        for const in constants:
-            parametrization = [
-                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
-            ]
-
-    parametrization_tau = [coord.subs(t, tau) for coord in parametrization]
+    parametrization = sp.Matrix(parametrization)
 
     # Step 1 - Compute the derivative of the parametrization
-    X_tau = Matrix([sp.diff(coord, tau) for coord in parametrization_tau])
+    X_t = sp.Matrix([parametrization.diff(parameter)])
 
     # Step 2 - Compute the magnitude of the derivative
-    magnitude = X_tau.norm()
+    magnitude = X_t.norm()
 
     # Step 3 - Simplify
-    # magnitude = true_simplify(magnitude)
+    magnitude = sp.simplify(magnitude)
 
     # Step 4 - Integrate to get the arc length
-    arc_length = sp.integrate(magnitude, (tau, bounds[0], bounds[1]))
+    arc_length_integral = sp.Integral(magnitude, (parameter, bounds[0], bounds[1]))
+
+    try:  # In case the integral is too hard
+        arc_length = func_timeout(6, arc_length_integral.doit)
+    except FunctionTimedOut:
+        dict = {
+            "msg": "No elementary antiderivative found.",
+            "integral": arc_length_integral,
+        }
+        return dict
 
     # Step 5 - Simplify again
-    arc_length = true_simplify(arc_length)
+    arc_length = sp.simplify(arc_length)
 
     return arc_length
 
@@ -436,39 +386,25 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
     sp expression
         The arc length element ds.
     """
-    t = sp.symbols(str(parameter), real=True)
-    constants = [
-        sp.Symbol(str(constant), real=True, positive=True)
-        for constant in find_constants(parametrization, parameter)
-    ]
-
-    if len(constants) > 0:
-        for const in constants:
-            parametrization = [
-                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
-            ]
-
     # Step 1 - Get arc length
     arc_length = compute_arc_length(parametrization, parameter, bounds)
 
-    if len(constants) > 0:
-        arc_length = arc_length.subs(
-            (arc_length.free_symbols - set(constants)).pop(), t
-        )
-    elif len(arc_length.free_symbols) == 1:
-        arc_length = arc_length.subs(arc_length.free_symbols.pop(), t)
+    if isinstance(arc_length, dict):
+        return arc_length  # Return the dict with message if integral failed
 
     # Step 2 - Solve for t in terms of s
-    s = sp.symbols("s", real=True)
-    equation = sp.Eq(arc_length, s)
+    s_dummy = sp.Dummy("s", real=True)
+    equation = sp.Eq(arc_length, s_dummy)
 
-    t_in_terms_of_s = sp.solve(equation, t)[0]
+    t_in_terms_of_s = sp.solve(equation, parameter)[0]
 
     # Step 3 - Substitute t back into the parametrization
-    reparametrized_curve = [coord.subs(t, t_in_terms_of_s) for coord in parametrization]
+    reparametrized_curve = [
+        coord.subs(parameter, t_in_terms_of_s) for coord in parametrization
+    ]
 
     # Step 4 - Simplify
-    reparametrized_curve = [true_simplify(coord) for coord in reparametrized_curve]
+    reparametrized_curve = [sp.simplify(coord) for coord in reparametrized_curve]
 
     return reparametrized_curve
 
@@ -487,21 +423,10 @@ def compute_first_fundamental_form(parametrization, parameters):
         Matrix
         The first fundamental form matrix.
     """
-    u, v = sp.symbols(" ".join([str(p) for p in parameters]), real=True)
-    constants = [
-        sp.Symbol(str(constant), real=True, positive=True)
-        for constant in find_constants(parametrization, parameters)
-    ]
-
-    if len(constants) > 0:
-        for const in constants:
-            parametrization = [
-                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
-            ]
 
     # Step 1 - Compute the partial derivatives
-    X_u = Matrix([sp.diff(coord, u) for coord in parametrization])
-    X_v = Matrix([sp.diff(coord, v) for coord in parametrization])
+    X_u = Matrix([sp.diff(coord, parameters[0]) for coord in parametrization])
+    X_v = Matrix([sp.diff(coord, parameters[1]) for coord in parametrization])
 
     # Step 2 - Compute the coefficients of the first fundamental form using dot product
     E = X_u.dot(X_u)
@@ -509,9 +434,9 @@ def compute_first_fundamental_form(parametrization, parameters):
     G = X_v.dot(X_v)
 
     # Step 3 - Simplify
-    E = true_simplify(E)
-    F = true_simplify(F)
-    G = true_simplify(G)
+    E = sp.simplify(E)
+    F = sp.simplify(F)
+    G = sp.simplify(G)
 
     # Step 4 - Construct the first fundamental form matrix
     first_fundamental_form_matrix = Matrix([[E, F], [F, G]])
@@ -519,7 +444,7 @@ def compute_first_fundamental_form(parametrization, parameters):
     return first_fundamental_form_matrix
 
 
-def compute_surface_area(parametrization, parameters, bounds):
+def compute_surface_area(parametrization, parameters, u_bounds, v_bounds):
     """
     Calculate the surface area element of a surface given its parametrization.
 
@@ -528,15 +453,14 @@ def compute_surface_area(parametrization, parameters, bounds):
         A list of sp expressions representing the parametrization of the surface.
     parameters : list
         A list of sp symbols representing the parameters of the surface.
-    bounds : dict
-        A dictionary specifying the integration bounds for each parameter.
-    assumptions : dict, optional
-        A dictionary of assumptions for the parameters, used to simplify the expressions.
+    u_bounds : list
+        A list specifying the integration bounds for the u parameter.
+    v_bounds : list
+        A list specifying the integration bounds for the v parameter.
     Returns:
     sp expression
         The surface area element dA.
     """
-    u, v = parameters
 
     # Step 1 - Compute the first fundamental form matrix
     first_fundamental_form_matrix = compute_first_fundamental_form(
@@ -548,25 +472,27 @@ def compute_surface_area(parametrization, parameters, bounds):
     G = first_fundamental_form_matrix[1, 1]
 
     # Step 2 - Compute the integrand
-    # Make sure to get rid of absolute values if possible
-    # I have to do it manually because sp is legitimately stupid
-    with sp.assuming(Q.positive(E) & Q.positive(G) & Q.nonnegative(E * G - F**2)):
-        integrand = sp.sqrt(E * G - F**2)
-        integrand_no_abs = integrand.replace(
-            lambda x: isinstance(x, sp.Abs), lambda x: x.args[0]
-        )
-        integrand_no_abs = sp.refine(
-            integrand_no_abs,
-            Q.positive(E) & Q.positive(G) & Q.nonnegative(E * G - F**2),
-        )
+    integrand = sp.refine(
+        sp.sqrt(E * G - F**2), Q.positive(E) & Q.positive(G) & Q.positive(E * G - F**2)
+    )
+    integrand_no_abs = integrand.replace(sp.Abs, lambda x: x)
 
     # Step 3 - Compute the surface area
-
-    surface_area = sp.integrate(
+    surface_area_integral = sp.Integral(
         integrand_no_abs,
-        (v, bounds[v][0], bounds[v][1]),
-        (u, bounds[u][0], bounds[u][1]),
+        (parameters[0], u_bounds[0], u_bounds[1]),
+        (parameters[1], v_bounds[0], v_bounds[1]),
     )
+
+    # In case the integral is too hard
+    try:
+        surface_area = func_timeout(6, surface_area_integral.doit)
+    except FunctionTimedOut:
+        dict = {
+            "msg": "No elementary antiderivative found.",
+            "integral": surface_area_integral,
+        }
+        return dict
 
     return surface_area
 
@@ -576,8 +502,8 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
     Calculate the Frenet-Serret apparatus of a curve given its parametrization.
 
     Parameters:
-    parametrization : list or Matrix
-        A list / Matrix of sympy expressions representing the parametrization
+    parametrization : list
+        A list of sympy expressions representing the parametrization
         of the curve, e.g. [x(t), y(t)] or [x(t), y(t), z(t)].
     parameter : sympy symbol
         The parameter of the curve (usually t).
@@ -592,47 +518,39 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
           "tau": torsion
         }
     """
-    t = parameter
-
-    # --- Normalize input to a list of coordinates ---
-    if isinstance(parametrization, Matrix):
-        coords = list(parametrization)
-    else:
-        coords = list(parametrization)
-
-    # If curve is planar (2D), embed it in 3D by adding z = 0
-    if len(coords) == 2:
-        coords.append(sp.Integer(0))
 
     # Step 1 - First derivative (velocity) and simplify
-    X_t = Matrix([sp.diff(coord, t) for coord in coords])
-    X_t = true_simplify(X_t)
+    X_t = Matrix([sp.diff(coord, parameter) for coord in parametrization])
+    X_t = sp.simplify(X_t)
 
     # Step 2 - Unit tangent vector T
     X_t_norm = sp.sqrt(X_t.dot(X_t))
     T = X_t / X_t_norm
-    T = true_simplify(T)
+    T = sp.simplify(T)
 
     # Step 3 - Second derivative (acceleration)
-    X_tt = Matrix([sp.diff(coord, t) for coord in X_t])
-    X_tt = true_simplify(X_tt)
+    X_tt = Matrix([sp.diff(coord, parameter) for coord in X_t])
+    X_tt = sp.simplify(X_tt)
+
+    if all(sp.simplify(coord) == 0 for coord in X_tt):
+        raise ValueError("Frenet-Serret apparatus undefined for straight lines.")
 
     # Step 4 - Curvature kappa
     kappa = (X_t.cross(X_tt)).norm() / (X_t_norm**3)
-    kappa = true_simplify(kappa)
+    kappa = sp.simplify(kappa)
 
     # Step 5 - Normal vector N
-    T_t = Matrix([sp.diff(comp, t) for comp in T])
+    T_t = Matrix([sp.diff(comp, parameter) for comp in T])
     T_t_norm = sp.sqrt(T_t.dot(T_t))
-    N = true_simplify(T_t / T_t_norm)
+    N = sp.simplify(T_t / T_t_norm)
 
     # Step 6 - Binormal B
-    B = true_simplify(T.cross(N))
+    B = sp.simplify(T.cross(N))
 
     # Step 7 - Torsion tau
-    X_ttt = Matrix([sp.diff(coord, t) for coord in X_tt])
+    X_ttt = Matrix([sp.diff(coord, parameter) for coord in X_tt])
     tau = (X_t.cross(X_tt)).dot(X_ttt) / (X_t.cross(X_tt)).norm() ** 2
-    tau = true_simplify(tau)
+    tau = sp.simplify(tau)
 
     frenet_serret_dict = {"T": T, "N": N, "B": B, "kappa": kappa, "tau": tau}
     return frenet_serret_dict
@@ -652,24 +570,13 @@ def compute_second_fundamental_form(parametrization, parameters):
     Matrix
         The second fundamental form matrix.
     """
-    u, v = sp.symbols(" ".join([str(p) for p in parameters]), real=True)
-    constants = [
-        sp.Symbol(str(constant), real=True, positive=True)
-        for constant in find_constants(parametrization, parameters)
-    ]
-
-    if len(constants) > 0:
-        for const in constants:
-            parametrization = [
-                coord.subs(sp.symbols(str(const)), const) for coord in parametrization
-            ]
 
     # Step 1 - Compute the partial derivatives
-    X_u = Matrix([sp.diff(coord, u) for coord in parametrization])
-    X_v = Matrix([sp.diff(coord, v) for coord in parametrization])
-    X_uu = Matrix([sp.diff(coord, u) for coord in X_u])
-    X_uv = Matrix([sp.diff(coord, v) for coord in X_u])
-    X_vv = Matrix([sp.diff(coord, v) for coord in X_v])
+    X_u = Matrix([sp.diff(coord, parameters[0]) for coord in parametrization])
+    X_v = Matrix([sp.diff(coord, parameters[1]) for coord in parametrization])
+    X_uu = Matrix([sp.diff(coord, parameters[0]) for coord in X_u])
+    X_uv = Matrix([sp.diff(coord, parameters[1]) for coord in X_u])
+    X_vv = Matrix([sp.diff(coord, parameters[1]) for coord in X_v])
 
     # Step 2 - Compute the unit normal vector
     N = compute_unit_normal_vector(parametrization, parameters)
@@ -680,9 +587,9 @@ def compute_second_fundamental_form(parametrization, parameters):
     N_coeff = N.dot(X_vv)
 
     # Step 4 - Simplify
-    L = true_simplify(L)
-    M = true_simplify(M)
-    N_coeff = true_simplify(N_coeff)
+    L = sp.simplify(L)
+    M = sp.simplify(M)
+    N_coeff = sp.simplify(N_coeff)
 
     # Step 5 - Construct the second fundamental form matrix
     second_fundamental_form_matrix = Matrix([[L, M], [M, N_coeff]])
@@ -715,13 +622,16 @@ def compute_shape_operator(parametrization, parameters):
     )
 
     # Step 3 - Compute the inverse of the first fundamental form matrix
+    if first_fundamental_form_matrix.det() == 0:
+        raise ValueError("Shape operator undefined for degenerate parametrization.")
     I_inv = first_fundamental_form_matrix.inv()
+    I_inv = sp.simplify(I_inv)
 
     # Step 4 - Compute the shape operator as the product of I_inv and II
     shape_operator_matrix = I_inv * second_fundamental_form_matrix
 
     # Step 5 - Simplify
-    shape_operator_matrix = true_simplify(shape_operator_matrix)
+    shape_operator_matrix = sp.simplify(shape_operator_matrix)
 
     return shape_operator_matrix
 
@@ -747,7 +657,7 @@ def compute_mean_curvature(parametrization, parameters):
     H = (shape_operator_matrix[0, 0] + shape_operator_matrix[1, 1]) / 2
 
     # Step 3 - Simplify
-    H = true_simplify(H)
+    H = sp.simplify(H)
 
     return H
 
@@ -773,7 +683,7 @@ def compute_gaussian_curvature(parametrization, parameters):
     K = shape_operator_matrix.det()
 
     # Step 3 - Simplify
-    K = true_simplify(K)
+    K = sp.simplify(K)
 
     return K
 
@@ -792,7 +702,6 @@ def compute_christoffel_symbols(parametrization, parameters):
     dict
         A dictionary with keys as tuples (i, j, k) representing the Christoffel symbols Γ^k_ij.
     """
-    u, v = parameters
 
     # Step 1 - Compute the first fundamental form matrix
     first_fundamental_form_matrix = compute_first_fundamental_form(
@@ -803,12 +712,12 @@ def compute_christoffel_symbols(parametrization, parameters):
     G = first_fundamental_form_matrix[1, 1]
 
     # Step 2 - Compute partial derivatives
-    E_u = sp.diff(E, u)
-    E_v = sp.diff(E, v)
-    F_u = sp.diff(F, u)
-    F_v = sp.diff(F, v)
-    G_u = sp.diff(G, u)
-    G_v = sp.diff(G, v)
+    E_u = sp.diff(E, parameters[0])
+    E_v = sp.diff(E, parameters[1])
+    F_u = sp.diff(F, parameters[0])
+    F_v = sp.diff(F, parameters[1])
+    G_u = sp.diff(G, parameters[0])
+    G_v = sp.diff(G, parameters[1])
 
     # Step 3 - Compute the inverse of the first fundamental form matrix and multipliers for each pair of Christoffel symbols
     I_inv = first_fundamental_form_matrix.inv()
@@ -836,7 +745,7 @@ def compute_christoffel_symbols(parametrization, parameters):
 
     # Step 5 - Simplify
     for key, expr in gamma.items():
-        gamma[key] = true_simplify(expr[0])
+        gamma[key] = sp.simplify(expr[0])
 
     return gamma
 
