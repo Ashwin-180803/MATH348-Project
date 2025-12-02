@@ -62,6 +62,64 @@ body {
   resize: vertical;
 }
 
+/* Tabs */
+.tabs {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.main-tabs {
+  margin-bottom: 0.25rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;   /* centers the tabs */
+  gap: 1rem;                  /* spacing between tabs */
+}
+
+.sub-tabs {
+  margin-bottom: 0.5rem;
+}
+
+.tab {
+  border: 1px solid #d1d5f0;
+  background: #f9f9ff;
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease,
+    transform 0.05s ease, box-shadow 0.15s ease;
+}
+
+/* Only main tabs bold + slightly larger */
+.main-tabs .tab {
+  font-weight: 700;          /* bold */
+  font-size: 1rem;           /* slightly larger text */
+  padding: 0.4rem 1.2rem;    /* balanced bigger pill */
+}
+
+
+.tab:hover {
+  background: #eef0ff;
+  border-color: #c4c9ff;
+}
+
+.tab.active {
+  background: #4f46e5;
+  color: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.25);
+}
+
+/* Hide original dropdown controls */
+.hidden-control {
+  display: none;
+}
+
 /* Grouping for curve/surface subsections */
 #curve-section,
 #surface-section {
@@ -81,12 +139,20 @@ body {
 }
 
 .param-row label {
-  flex: 0 0 1.5rem;
-  font-weight: 500;
+  flex: 0 0 90px;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.param-row input {
+.param-row input,
+.param-row textarea {
   flex: 1;
+}
+
+/* Make inline “to” / “x” text not stretch */
+.param-row input + span,
+.param-row span.inline-label {
+  flex: 0 0 auto;
 }
 
 /* Compute button */
@@ -190,5 +256,13 @@ body {
 
   .plot {
     height: 320px;
+  }
+
+  .param-row {
+    flex-wrap: wrap;
+  }
+
+  .param-row label {
+    flex: 0 0 100%;
   }
 }

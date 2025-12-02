@@ -15,11 +15,108 @@ const plotDiv = document.getElementById("plot");
 const infoDiv = document.getElementById("info");
 const computeBtn = document.getElementById("compute");
 
+/* NEW: tab elements */
+const mainTabs = document.querySelectorAll(".main-tabs .tab");
+const curveQuantityTabsContainer = document.getElementById("curve-quantity-tabs");
+const surfaceQuantityTabsContainer = document.getElementById("surface-quantity-tabs");
+const curveQuantityTabs = curveQuantityTabsContainer
+  ? curveQuantityTabsContainer.querySelectorAll(".tab")
+  : [];
+const surfaceQuantityTabs = surfaceQuantityTabsContainer
+  ? surfaceQuantityTabsContainer.querySelectorAll(".tab")
+  : [];
+
+/* Helper to set active class on tabs in a group */
+function setActiveTab(tabs, activeTab) {
+  tabs.forEach((tab) => {
+    if (tab === activeTab) {
+      tab.classList.add("active");
+    } else {
+      tab.classList.remove("active");
+    }
+  });
+}
+
+/* MAIN TAB HANDLERS (Curves / Surfaces) */
+mainTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const mode = tab.dataset.modeTab; // "curve" or "surface"
+
+    // Visually mark the active main tab
+    setActiveTab(mainTabs, tab);
+
+    // Update hidden select + trigger existing change logic
+    if (modeSelect) {
+      modeSelect.value = mode;
+      modeSelect.dispatchEvent(new Event("change"));
+    }
+
+    // Show relevant quantity subtabs
+    if (mode === "curve") {
+      if (curveQuantityTabsContainer) {
+        curveQuantityTabsContainer.style.display = "flex";
+      }
+      if (surfaceQuantityTabsContainer) {
+        surfaceQuantityTabsContainer.style.display = "none";
+      }
+    } else {
+      if (curveQuantityTabsContainer) {
+        curveQuantityTabsContainer.style.display = "none";
+      }
+      if (surfaceQuantityTabsContainer) {
+        surfaceQuantityTabsContainer.style.display = "flex";
+      }
+    }
+  });
+});
+
+/* QUANTITY SUBTAB HANDLER */
+function handleQuantityTabClick(tab, groupTabs) {
+  const quantity = tab.dataset.quantityTab || "";
+
+  // Visually mark the active subtab in this group
+  setActiveTab(groupTabs, tab);
+
+  // Update hidden quantity select so backend logic stays the same
+  if (quantitySelect) {
+    quantitySelect.value = quantity;
+  }
+
+  // For surfaces, automatically toggle symbolic checkbox:
+  // if a symbolic quantity is chosen, turn it on; for "Numeric only", off.
+  const computeSymbolicCheckbox = document.getElementById("compute_symbolic");
+  if (computeSymbolicCheckbox && modeSelect && modeSelect.value === "surface") {
+    computeSymbolicCheckbox.checked = quantity !== "";
+  }
+}
+
+/* Wire up curve quantity tabs */
+curveQuantityTabs.forEach((tab) => {
+  tab.addEventListener("click", () =>
+    handleQuantityTabClick(tab, curveQuantityTabs)
+  );
+});
+
+/* Wire up surface quantity tabs */
+surfaceQuantityTabs.forEach((tab) => {
+  tab.addEventListener("click", () =>
+    handleQuantityTabClick(tab, surfaceQuantityTabs)
+  );
+});
+
+/* Parameter templates */
 const paramTemplates = {
   helix: [["a", "1.0"], ["b", "0.2"]],
   circle: [["a", "1.0"]],
   ellipse: [["a", "2.0"], ["b", "1.0"]],
-  line: [["x0", "0"], ["y0", "0"], ["z0", "0"], ["x1", "1"], ["y1", "0"], ["z1", "0"]],
+  line: [
+    ["x0", "0"],
+    ["y0", "0"],
+    ["z0", "0"],
+    ["x1", "1"],
+    ["y1", "0"],
+    ["z1", "0"],
+  ],
   cycloid: [["a", "1.0"]],
   twisted_cubic: [],
   catenary: [["C", "1.0"]],
@@ -34,8 +131,11 @@ const surfaceTemplates = {
   custom_surface: [],
 };
 
+/* Curve parameter rendering */
 function renderCurveParams(curve) {
   curveParamsDiv.innerHTML = "";
+
+  // Custom curve: user defines x(t), y(t), z(t)
   if (curve === "custom_curve") {
     curveParamsDiv.innerHTML = `
       <label>Custom x(t), y(t), z(t)</label>
@@ -47,6 +147,38 @@ function renderCurveParams(curve) {
     return;
   }
 
+  // Special layout for line: x-range, y-range, z-range,
+  // each on its own line, but with endpoints (0/1, etc.) inline.
+  if (curve === "line") {
+    const defaults = {};
+    (paramTemplates.line || []).forEach(([name, val]) => {
+      defaults[name] = val;
+    });
+
+    curveParamsDiv.innerHTML = `
+      <div class="param-row">
+        <label>x-range:</label>
+        <input id="param_x0" value="${defaults.x0 ?? "0"}"> 
+        <span class="inline-label">to</span>
+        <input id="param_x1" value="${defaults.x1 ?? "1"}">
+      </div>
+      <div class="param-row">
+        <label>y-range:</label>
+        <input id="param_y0" value="${defaults.y0 ?? "0"}"> 
+        <span class="inline-label">to</span>
+        <input id="param_y1" value="${defaults.y1 ?? "0"}">
+      </div>
+      <div class="param-row">
+        <label>z-range:</label>
+        <input id="param_z0" value="${defaults.z0 ?? "0"}"> 
+        <span class="inline-label">to</span>
+        <input id="param_z1" value="${defaults.z1 ?? "0"}">
+      </div>
+    `;
+    return;
+  }
+
+  // All other curves: one parameter per line
   const list = paramTemplates[curve] || [];
   if (!list.length) {
     curveParamsDiv.innerHTML = `<em style="color:#666;">No parameters (uses defaults).</em>`;
@@ -64,6 +196,7 @@ function renderCurveParams(curve) {
   });
 }
 
+/* Surface parameter rendering */
 function renderSurfaceParams(surface) {
   surfaceParamsDiv.innerHTML = "";
   if (surface === "custom_surface") {
@@ -94,7 +227,7 @@ function renderSurfaceParams(surface) {
   });
 }
 
-// Mode switching
+/* Mode switching (driven by hidden <select id="mode">) */
 modeSelect.addEventListener("change", () => {
   const mode = modeSelect.value;
   if (mode === "curve") {
@@ -106,14 +239,23 @@ modeSelect.addEventListener("change", () => {
   }
 });
 
+/* Curve/surface change listeners */
 curveSelect.addEventListener("change", () => renderCurveParams(curveSelect.value));
 surfaceSelect.addEventListener("change", () => renderSurfaceParams(surfaceSelect.value));
 
-// Initial render
+/* Initial render */
 renderCurveParams(curveSelect.value);
 renderSurfaceParams(surfaceSelect.value);
 
-// Compute handler
+// Ensure initial hidden selects match default tabs
+if (modeSelect) {
+  modeSelect.value = "curve";
+}
+if (quantitySelect) {
+  quantitySelect.value = "";
+}
+
+/* Compute handler */
 computeBtn.addEventListener("click", async () => {
   computeBtn.disabled = true;
   computeBtn.textContent = "Computing...";
@@ -226,19 +368,18 @@ computeBtn.addEventListener("click", async () => {
       html += "</table>";
 
       if (data.symbolic && Object.keys(data.symbolic).length > 0) {
-  	html += "<h4>Symbolic results</h4>";
-  	for (const key in data.symbolic) {
-    		const latex = data.symbolic[key];   // already LaTeX from backend
-    		html += `<p><strong>${key}</strong>: <span class="math">\\[${latex}\\]</span></p>`;
-  		}
-	}
-	infoDiv.innerHTML = html;
+        html += "<h4>Symbolic results</h4>";
+        for (const key in data.symbolic) {
+          const latex = data.symbolic[key]; // already LaTeX from backend
+          html += `<p><strong>${key}</strong>: <span class="math">\\[${latex}\\]</span></p>`;
+        }
+      }
+      infoDiv.innerHTML = html;
 
-	// Ask MathJax to typeset the new content
-	if (window.MathJax && window.MathJax.typesetPromise) {
-  		MathJax.typesetPromise([infoDiv]).catch(err => console.error(err));
-	}
-
+      // Ask MathJax to typeset the new content
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        MathJax.typesetPromise([infoDiv]).catch((err) => console.error(err));
+      }
     } else {
       // Surface mode
       const surface = surfaceSelect.value;
@@ -333,19 +474,18 @@ computeBtn.addEventListener("click", async () => {
       html += `<p>Resolution: ${params.nu} × ${params.nv}</p>`;
 
       if (data.symbolic && Object.keys(data.symbolic).length > 0) {
-  	html += "<h4>Symbolic results</h4>";
-  	for (const key in data.symbolic) {
-    		const latex = data.symbolic[key];
-    		html += `<p><strong>${key}</strong>: <span class="math">\\[${latex}\\]</span></p>`;
-  		}
-	}
-	infoDiv.innerHTML = html;
+        html += "<h4>Symbolic results</h4>";
+        for (const key in data.symbolic) {
+          const latex = data.symbolic[key];
+          html += `<p><strong>${key}</strong>: <span class="math">\\[${latex}\\]</span></p>`;
+        }
+      }
+      infoDiv.innerHTML = html;
 
-	// Ask MathJax to typeset the new content
-	if (window.MathJax && window.MathJax.typesetPromise) {
- 	 	MathJax.typesetPromise([infoDiv]).catch(err => console.error(err));
-	}
-
+      // Ask MathJax to typeset the new content
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        MathJax.typesetPromise([infoDiv]).catch((err) => console.error(err));
+      }
     }
   } catch (err) {
     console.error(err);
