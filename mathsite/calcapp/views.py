@@ -34,8 +34,6 @@ def compute(request):
 
             # Numeric: positions, curvature, torsion, arc-length
             t, R = functions.numeric_curve_positions(curve, params, t0, t1, n)
-            curvature, torsion = functions.curvature_torsion_from_R(R, t)
-            arclen = functions.arc_length_numeric(R, t)
 
             symbolic = {}
 
@@ -92,9 +90,6 @@ def compute(request):
                     "x": R[:, 0].tolist(),
                     "y": R[:, 1].tolist(),
                     "z": R[:, 2].tolist(),
-                    "curvature": curvature,
-                    "torsion": torsion,
-                    "arc_length": arclen,
                     "symbolic": symbolic,
                 }
             )
@@ -117,11 +112,11 @@ def compute(request):
             v1 = float(params.get("v1", 2 * 3.141592653589793))
 
             exprs_num = functions.get_surface_expressions(surface, params)
-            
+
             U, V, X, Y, Z = functions.mesh_from_parametric_surfaces(
                 exprs_num, (u0, u1), (v0, v1), nu, nv
             )
-            
+
             symbolic = {}
 
             if compute_symbolic_flag and symbolic_quantity:
@@ -132,7 +127,7 @@ def compute(request):
                     sp.sympify(exprs_num["y"]),
                     sp.sympify(exprs_num["z"]),
                 ]
-                
+
                 parameters = (u, v)
                 # Parse input
                 for i in range(len(param_list)):
