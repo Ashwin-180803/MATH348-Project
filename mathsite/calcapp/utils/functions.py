@@ -352,6 +352,7 @@ def compute_arc_length(parametrization, parameter, bounds):
 
     # Step 3 - Simplify
     magnitude = sp.simplify(magnitude)
+    magnitude = magnitude.replace(sp.Abs, lambda x: x)
 
     # Step 4 - Integrate to get the arc length
     arc_length_integral = sp.Integral(magnitude, (parameter, bounds[0], bounds[1]))
@@ -722,9 +723,11 @@ def compute_christoffel_symbols(parametrization, parameters):
     # Step 3 - Compute the inverse of the first fundamental form matrix and multipliers for each pair of Christoffel symbols
     I_inv = first_fundamental_form_matrix.inv()
 
-    gamma_sub_uu_multiplier = Matrix([[0.5 * E_u], [F_u - 0.5 * E_v]])
-    gamma_sub_uv_multiplier = Matrix([[0.5 * E_v], [0.5 * G_u]])
-    gamma_sub_vv_multiplier = Matrix([[F_v - 0.5 * G_u], [0.5 * G_v]])
+    half = sp.Rational(1, 2)
+
+    gamma_sub_uu_multiplier = Matrix([[half * E_u], [F_u - half * E_v]])
+    gamma_sub_uv_multiplier = Matrix([[half * E_v], [half * G_u]])
+    gamma_sub_vv_multiplier = Matrix([[F_v - half * G_u], [half * G_v]])
 
     # Step 4 - Compute the Christoffel symbols with matrix multiplication
     gamma_u_sub_uu = I_inv.row(0) * gamma_sub_uu_multiplier
@@ -735,12 +738,12 @@ def compute_christoffel_symbols(parametrization, parameters):
     gamma_v_sub_vv = I_inv.row(1) * gamma_sub_vv_multiplier
 
     gamma = {
-        "Γ^u_uu": gamma_u_sub_uu,
-        "Γ^v_uu": gamma_v_sub_uu,
-        "Γ^u_uv": gamma_u_sub_uv,
-        "Γ^v_uv": gamma_v_sub_uv,
-        "Γ^u_vv": gamma_u_sub_vv,
-        "Γ^v_vv": gamma_v_sub_vv,
+        "gamma_u_sub_uu": gamma_u_sub_uu,
+        "gamma_v_sub_uu": gamma_v_sub_uu,
+        "gamma_u_sub_uv": gamma_u_sub_uv,
+        "gamma_v_sub_uv": gamma_v_sub_uv,
+        "gamma_u_sub_vv": gamma_u_sub_vv,
+        "gamma_v_sub_vv": gamma_v_sub_vv,
     }
 
     # Step 5 - Simplify
@@ -774,21 +777,21 @@ def compute_codazzi_equations(parametrization, parameters):
 
     # Step 2 - Compute the Christoffel symbols
     christoffel_symbols = compute_christoffel_symbols(parametrization, parameters)
-    gamma_u_sub_uu = dict(christoffel_symbols)["Γ^u_uu"]
-    gamma_v_sub_uu = dict(christoffel_symbols)["Γ^v_uu"]
-    gamma_u_sub_uv = dict(christoffel_symbols)["Γ^u_uv"]
-    gamma_v_sub_uv = dict(christoffel_symbols)["Γ^v_uv"]
-    gamma_u_sub_vv = dict(christoffel_symbols)["Γ^u_vv"]
-    gamma_v_sub_vv = dict(christoffel_symbols)["Γ^v_vv"]
+    gamma_u_sub_uu = dict(christoffel_symbols)["gamma_u_sub_uu"]
+    gamma_v_sub_uu = dict(christoffel_symbols)["gamma_v_sub_uu"]
+    gamma_u_sub_uv = dict(christoffel_symbols)["gamma_u_sub_uv"]
+    gamma_v_sub_uv = dict(christoffel_symbols)["gamma_v_sub_uv"]
+    gamma_u_sub_vv = dict(christoffel_symbols)["gamma_u_sub_vv"]
+    gamma_v_sub_vv = dict(christoffel_symbols)["gamma_v_sub_vv"]
 
     # Step 3 - Compute the Codazzi equations
-    first_codazzi_eq = (
+    first_codazzi_eq_rhs = (
         L * gamma_u_sub_uv
         + M * gamma_v_sub_uv
         - M * gamma_u_sub_uu
         - N_coeff * gamma_v_sub_uu
     )
-    second_codazzi_eq = (
+    second_codazzi_eq_rhs = (
         L * gamma_u_sub_vv
         + M * gamma_v_sub_vv
         - M * gamma_u_sub_uv
@@ -796,15 +799,28 @@ def compute_codazzi_equations(parametrization, parameters):
     )
 
     # Step 4 - Simplify
-    first_codazzi_eq = true_simplify(first_codazzi_eq)
-    second_codazzi_eq = true_simplify(second_codazzi_eq)
+    first_codazzi_eq_rhs = sp.simplify(first_codazzi_eq_rhs)
+    second_codazzi_eq_rhs = sp.simplify(second_codazzi_eq_rhs)
 
+    # Step 5 - Verify
     L_v = sp.diff(L, parameters[1])
     M_u = sp.diff(M, parameters[0])
     M_v = sp.diff(M, parameters[1])
     N_u = sp.diff(N_coeff, parameters[0])
 
-    return first_codazzi_eq, second_codazzi_eq
+    first_codazzi_eq_lhs = sp.simplify(L_v - M_u)
+    second_codazzi_eq_lhs = sp.simplify(M_v - N_u)
+
+    return (
+        first_codazzi_eq_rhs,
+        second_codazzi_eq_rhs,
+        first_codazzi_eq_lhs,
+        second_codazzi_eq_lhs,
+    )
+
+
+def has_float(expr):
+    return any(isinstance(a, sp.Float) for a in expr.atoms(sp.Float))
 
 
 def compute_gauss_equations(parametrization, parameters):
@@ -839,12 +855,12 @@ def compute_gauss_equations(parametrization, parameters):
 
     # Step 3 - Compute the Christoffel symbols
     christoffel_symbols = compute_christoffel_symbols(parametrization, parameters)
-    gamma_u_sub_uu = dict(christoffel_symbols)["Γ^u_uu"]
-    gamma_v_sub_uu = dict(christoffel_symbols)["Γ^v_uu"]
-    gamma_u_sub_uv = dict(christoffel_symbols)["Γ^u_uv"]
-    gamma_v_sub_uv = dict(christoffel_symbols)["Γ^v_uv"]
-    gamma_u_sub_vv = dict(christoffel_symbols)["Γ^u_vv"]
-    gamma_v_sub_vv = dict(christoffel_symbols)["Γ^v_vv"]
+    gamma_u_sub_uu = dict(christoffel_symbols)["gamma_u_sub_uu"]
+    gamma_v_sub_uu = dict(christoffel_symbols)["gamma_v_sub_uu"]
+    gamma_u_sub_uv = dict(christoffel_symbols)["gamma_u_sub_uv"]
+    gamma_v_sub_uv = dict(christoffel_symbols)["gamma_v_sub_uv"]
+    gamma_u_sub_vv = dict(christoffel_symbols)["gamma_u_sub_vv"]
+    gamma_v_sub_vv = dict(christoffel_symbols)["gamma_v_sub_vv"]
 
     # Step 4 - Compute partial derivatives of Christoffel symbols
     gamma_u_sub_uv_u = sp.diff(gamma_u_sub_uv, parameters[0])
@@ -889,18 +905,28 @@ def compute_gauss_equations(parametrization, parameters):
     )
 
     # Step 6 - Simplify
-    first_gauss_eq = true_simplify(first_gauss_eq)
-    second_gauss_eq = true_simplify(second_gauss_eq)
-    third_gauss_eq = true_simplify(third_gauss_eq)
-    fourth_gauss_eq = true_simplify(fourth_gauss_eq)
+
+    first_gauss_eq_rhs = sp.simplify(first_gauss_eq)
+    second_gauss_eq_rhs = sp.simplify(second_gauss_eq)
+    third_gauss_eq_rhs = sp.simplify(third_gauss_eq)
+    fourth_gauss_eq_rhs = sp.simplify(fourth_gauss_eq)
 
     K_numerator = L * N - M**2
     K_denominator = E * G - F**2
-    K = true_simplify(K_numerator / K_denominator)
+    K = sp.simplify(K_numerator / K_denominator)
+
+    first_gauss_eq_lhs = sp.simplify(E * K)
+    second_gauss_eq_lhs = sp.simplify(F * K)
+    third_gauss_eq_lhs = sp.simplify(F * K)
+    fourth_gauss_eq_lhs = sp.simplify(G * K)
 
     return (
-        first_gauss_eq,
-        second_gauss_eq,
-        third_gauss_eq,
-        fourth_gauss_eq,
+        first_gauss_eq_rhs,
+        second_gauss_eq_rhs,
+        third_gauss_eq_rhs,
+        fourth_gauss_eq_rhs,
+        first_gauss_eq_lhs,
+        second_gauss_eq_lhs,
+        third_gauss_eq_lhs,
+        fourth_gauss_eq_lhs,
     )

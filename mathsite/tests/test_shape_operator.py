@@ -330,7 +330,6 @@ def test_shape_catenoid_numeric():
     X = parse_input(str(X), str([u, v]))
     S = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[-1 / sp.cosh(v) ** 2, 0], [0, 1 / sp.cosh(v) ** 2]])
-    print(S, expected)
     assert_matrix_equal(S, expected)
 
 
