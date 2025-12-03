@@ -15,7 +15,11 @@ const plotDiv = document.getElementById("plot");
 const infoDiv = document.getElementById("info");
 const computeBtn = document.getElementById("compute");
 
-/* NEW: tab elements */
+
+const curveParamDisplay = document.getElementById("curve-param-display");
+const surfaceParamDisplay = document.getElementById("surface-param-display");
+
+
 const mainTabs = document.querySelectorAll(".main-tabs .tab");
 const curveQuantityTabsContainer = document.getElementById("curve-quantity-tabs");
 const surfaceQuantityTabsContainer = document.getElementById("surface-quantity-tabs");
@@ -26,7 +30,7 @@ const surfaceQuantityTabs = surfaceQuantityTabsContainer
   ? surfaceQuantityTabsContainer.querySelectorAll(".tab")
   : [];
 
-/* Helper to set active class on tabs in a group */
+
 function setActiveTab(tabs, activeTab) {
   tabs.forEach((tab) => {
     if (tab === activeTab) {
@@ -37,21 +41,21 @@ function setActiveTab(tabs, activeTab) {
   });
 }
 
-/* MAIN TAB HANDLERS (Curves / Surfaces) */
+
 mainTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
-    const mode = tab.dataset.modeTab; // "curve" or "surface"
+    const mode = tab.dataset.modeTab; 
 
-    // Visually mark the active main tab
+    
     setActiveTab(mainTabs, tab);
 
-    // Update hidden select + trigger existing change logic
+    
     if (modeSelect) {
       modeSelect.value = mode;
       modeSelect.dispatchEvent(new Event("change"));
     }
 
-    // Show relevant quantity subtabs
+    
     if (mode === "curve") {
       if (curveQuantityTabsContainer) {
         curveQuantityTabsContainer.style.display = "flex";
@@ -70,45 +74,43 @@ mainTabs.forEach((tab) => {
   });
 });
 
-/* QUANTITY SUBTAB HANDLER */
+
 function handleQuantityTabClick(tab, groupTabs) {
   const quantity = tab.dataset.quantityTab || "";
 
-  // Visually mark the active subtab in this group
+  
   setActiveTab(groupTabs, tab);
 
-  // Update hidden quantity select so backend logic stays the same
+  
   if (quantitySelect) {
     quantitySelect.value = quantity;
   }
 
-  // For surfaces, automatically toggle symbolic checkbox:
-  // if a symbolic quantity is chosen, turn it on; for "Numeric only", off.
   const computeSymbolicCheckbox = document.getElementById("compute_symbolic");
   if (computeSymbolicCheckbox && modeSelect && modeSelect.value === "surface") {
     computeSymbolicCheckbox.checked = quantity !== "";
   }
 }
 
-/* Wire up curve quantity tabs */
+
 curveQuantityTabs.forEach((tab) => {
   tab.addEventListener("click", () =>
     handleQuantityTabClick(tab, curveQuantityTabs)
   );
 });
 
-/* Wire up surface quantity tabs */
+
 surfaceQuantityTabs.forEach((tab) => {
   tab.addEventListener("click", () =>
     handleQuantityTabClick(tab, surfaceQuantityTabs)
   );
 });
 
-/* Parameter templates */
+
 const paramTemplates = {
-  helix: [["a", "1.0"], ["b", "0.2"]],
-  circle: [["a", "1.0"]],
-  ellipse: [["a", "2.0"], ["b", "1.0"]],
+  helix: [],
+  circle: [],
+  ellipse: [],
   line: [
     ["x0", "0"],
     ["y0", "0"],
@@ -117,7 +119,7 @@ const paramTemplates = {
     ["y1", "0"],
     ["z1", "0"],
   ],
-  cycloid: [["a", "1.0"]],
+  cycloid: [],
   twisted_cubic: [],
   catenary: [["C", "1.0"]],
   hyperbola: [],
@@ -127,28 +129,116 @@ const paramTemplates = {
 const surfaceTemplates = {
   sphere: [["r", "1.0"]],
   torus: [["R", "1.0"], ["r", "0.4"]],
-  paraboloid: [["a", "1.0"]],
+  paraboloid: [],
   custom_surface: [],
 };
 
-/* Curve parameter rendering */
+
+function latexTypeset(target) {
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    MathJax.typesetPromise([target]).catch((err) => console.error(err));
+  }
+}
+
+function updateCurveParamDisplay() {
+  if (!curveParamDisplay || !curveSelect) return;
+
+  const curve = curveSelect.value;
+  let latex = "";
+
+  switch (curve) {
+    case "helix":
+      latex = "\\mathbf{X}(t) = \\big(a\\cos t,\\; a\\sin t,\\; bt\\big)";
+      break;
+    case "circle":
+      latex = "\\mathbf{X}(t) = \\big(a\\cos t,\\; a\\sin t\\big)";
+      break;
+    case "ellipse":
+      latex = "\\mathbf{X}(t) = \\big(a\\cos t,\\; b\\sin t\\big)";
+      break;
+    case "line":
+      latex =
+        "\\mathbf{X}(t) = \\big(x_0 + t(x_1 - x_0),\\; y_0 + t(y_1 - y_0),\\; z_0 + t(z_1 - z_0)\\big)";
+      break;
+    case "cycloid":
+      latex =
+        "\\mathbf{X}(t) = \\big(a(t - \\sin t),\\; a(1 - \\cos t)\\big)";
+      break;
+    case "twisted_cubic":
+      latex = "\\mathbf{X}(t) = \\big(t,\\; t^{2},\\; t^{3}\\big)";
+      break;
+    case "catenary":
+      latex = "\\mathbf{X}(t) = \\big(t,\\; C\\cosh(t/C)\\big)";
+      break;
+    case "hyperbola":
+      latex = "\\mathbf{X}(t) = \\big(\\cosh t,\\; \\sinh t\\big)";
+      break;
+    case "tractrix":
+      latex = "\\mathbf{X}(t) = \\big(t - \\tanh t,\\; \\operatorname{sech} t\\big)";
+      break;
+    case "custom_curve": {
+      const coord1El = document.getElementById("coord1");
+      const coord2El = document.getElementById("coord2");
+      const coord3El = document.getElementById("coord3");
+      const cx = coord1El?.value || "";
+      const cy = coord2El?.value || "";
+      const cz = coord3El?.value || "";
+
+      if (!cx && !cy && !cz) {
+        latex = "\\mathbf{X}(t) = \\big(\\,x(t),\\; y(t),\\; z(t)\\,\\big)";
+      } else {
+        const parts = [];
+        parts.push(cx || "x(t)");
+        parts.push(cy || "y(t)");
+        if (cz !== "") parts.push(cz || "z(t)");
+        latex = `\\mathbf{X}(t) = \\big(${parts.join(",\\; ")}\\big)`;
+      }
+      break;
+    }
+    default:
+      latex = "";
+  }
+
+  if (latex) {
+    curveParamDisplay.innerHTML = `<span class="math">\\(${latex}\\)</span>`;
+  } else {
+    curveParamDisplay.innerHTML = "";
+  }
+
+  latexTypeset(curveParamDisplay);
+}
+
+function updateSurfaceParamDisplay() {
+  if (!surfaceSelect) return;
+
+  
+  const varU = document.getElementById("us")?.value?.trim() || "u";
+  const varV = document.getElementById("vs")?.value?.trim() || "v";
+
+  
+  const usxInput = document.getElementById("usx");
+  const usyInput = document.getElementById("usy");
+  const uszInput = document.getElementById("usz");
+
+  if (usxInput) usxInput.placeholder = `X(${varU},${varV})`;
+  if (usyInput) usyInput.placeholder = `Y(${varU},${varV})`;
+  if (uszInput) uszInput.placeholder = `Z(${varU},${varV})`;
+
+  
+}
+
+
 function renderCurveParams(curve) {
   curveParamsDiv.innerHTML = "";
 
-  // Custom curve: user defines x(t), y(t), z(t)
+  
   if (curve === "custom_curve") {
-    curveParamsDiv.innerHTML = `
-      <label>Custom x(t), y(t), z(t)</label>
-      <textarea id="curve_x" rows="2" placeholder="cos(t)"></textarea>
-      <textarea id="curve_y" rows="2" placeholder="sin(t)"></textarea>
-      <textarea id="curve_z" rows="2" placeholder="t"></textarea>
-      <div style="font-size:12px;color:#666">Use Python-style: sin(t), cos(t), t**2, etc.</div>
-    `;
+    curveParamsDiv.innerHTML = `<em style="color:#666;">Uses Defaults, unless changed.</em>`;
+    updateCurveParamDisplay();
     return;
   }
 
-  // Special layout for line: x-range, y-range, z-range,
-  // each on its own line, but with endpoints (0/1, etc.) inline.
+
   if (curve === "line") {
     const defaults = {};
     (paramTemplates.line || []).forEach(([name, val]) => {
@@ -175,13 +265,15 @@ function renderCurveParams(curve) {
         <input id="param_z1" value="${defaults.z1 ?? "0"}">
       </div>
     `;
+    updateCurveParamDisplay();
     return;
   }
 
-  // All other curves: one parameter per line
+  
   const list = paramTemplates[curve] || [];
   if (!list.length) {
-    curveParamsDiv.innerHTML = `<em style="color:#666;">No parameters (uses defaults).</em>`;
+    curveParamsDiv.innerHTML = `<em style="color:#666;">Uses Defaults, unless changed.</em>`;
+    updateCurveParamDisplay();
     return;
   }
 
@@ -194,25 +286,43 @@ function renderCurveParams(curve) {
     `;
     curveParamsDiv.appendChild(row);
   });
+
+  updateCurveParamDisplay();
 }
 
-/* Surface parameter rendering */
+
 function renderSurfaceParams(surface) {
   surfaceParamsDiv.innerHTML = "";
   if (surface === "custom_surface") {
-    surfaceParamsDiv.innerHTML = `
-      <label>Custom X(u,v), Y(u,v), Z(u,v)</label>
-      <textarea id="surf_x" rows="2" placeholder="u*cos(v)"></textarea>
-      <textarea id="surf_y" rows="2" placeholder="u*sin(v)"></textarea>
-      <textarea id="surf_z" rows="2" placeholder="cos(u)+sin(v)"></textarea>
-      <div style="font-size:12px;color:#666">Use u, v and Python-style functions.</div>
-    `;
+    
+    const us = document.getElementById("us");
+    const vs = document.getElementById("vs");
+    const usx = document.getElementById("usx");
+    const usy = document.getElementById("usy");
+    const usz = document.getElementById("usz");
+    [us, vs, usx, usy, usz].forEach((el) => {
+      if (el) el.addEventListener("input", updateSurfaceParamDisplay);
+    });
+
+    surfaceParamsDiv.innerHTML = `<em style="color:#666;">Uses Defaults, unless changed.</em>`;
+    updateSurfaceParamDisplay();
     return;
   }
 
   const list = surfaceTemplates[surface] || [];
   if (!list.length) {
-    surfaceParamsDiv.innerHTML = `<em style="color:#666;">No parameters (uses defaults).</em>`;
+    
+    const us = document.getElementById("us");
+    const vs = document.getElementById("vs");
+    const usx = document.getElementById("usx");
+    const usy = document.getElementById("usy");
+    const usz = document.getElementById("usz");
+    [us, vs, usx, usy, usz].forEach((el) => {
+      if (el) el.addEventListener("input", updateSurfaceParamDisplay);
+    });
+
+    surfaceParamsDiv.innerHTML = `<em style="color:#666;">Uses Defaults, unless changed.</em>`;
+    updateSurfaceParamDisplay();
     return;
   }
 
@@ -225,9 +335,21 @@ function renderSurfaceParams(surface) {
     `;
     surfaceParamsDiv.appendChild(row);
   });
+
+  
+  const us = document.getElementById("us");
+  const vs = document.getElementById("vs");
+  const usx = document.getElementById("usx");
+  const usy = document.getElementById("usy");
+  const usz = document.getElementById("usz");
+  [us, vs, usx, usy, usz].forEach((el) => {
+    if (el) el.addEventListener("input", updateSurfaceParamDisplay);
+  });
+
+  updateSurfaceParamDisplay();
 }
 
-/* Mode switching (driven by hidden <select id="mode">) */
+
 modeSelect.addEventListener("change", () => {
   const mode = modeSelect.value;
   if (mode === "curve") {
@@ -236,18 +358,36 @@ modeSelect.addEventListener("change", () => {
   } else {
     curveSection.style.display = "none";
     surfaceSection.style.display = "block";
+    
+    if (surfaceSelect) {
+      setTimeout(() => {
+        surfaceSelect.dispatchEvent(new Event("change"));
+      }, 10);
+    }
   }
 });
 
-/* Curve/surface change listeners */
-curveSelect.addEventListener("change", () => renderCurveParams(curveSelect.value));
-surfaceSelect.addEventListener("change", () => renderSurfaceParams(surfaceSelect.value));
 
-/* Initial render */
-renderCurveParams(curveSelect.value);
-renderSurfaceParams(surfaceSelect.value);
+if (curveSelect) {
+  curveSelect.addEventListener("change", () => {
+    renderCurveParams(curveSelect.value);
+    updateCurveParamDisplay();
+  });
+}
+if (surfaceSelect) {
+  surfaceSelect.addEventListener("change", () => {
+    renderSurfaceParams(surfaceSelect.value);
+    updateSurfaceParamDisplay();
+  });
+}
 
-// Ensure initial hidden selects match default tabs
+
+if (curveSelect) renderCurveParams(curveSelect.value);
+if (surfaceSelect) renderSurfaceParams(surfaceSelect.value);
+updateCurveParamDisplay();
+updateSurfaceParamDisplay();
+
+
 if (modeSelect) {
   modeSelect.value = "curve";
 }
@@ -255,36 +395,51 @@ if (quantitySelect) {
   quantitySelect.value = "";
 }
 
-/* Compute handler */
-computeBtn.addEventListener("click", async () => {
-  computeBtn.disabled = true;
-  computeBtn.textContent = "Computing...";
-  infoDiv.textContent = "";
 
-  const mode = modeSelect.value;
+if (computeBtn) {
+  computeBtn.addEventListener("click", async () => {
+    if (!modeSelect) return;
+    computeBtn.disabled = true;
+    computeBtn.textContent = "Computing...";
+    if (infoDiv) infoDiv.textContent = "";
+
+    const mode = modeSelect.value;
 
   try {
     if (mode === "curve") {
       const curve = curveSelect.value;
       let params = {};
 
-      if (curve === "custom_curve") {
-        params.exprs = {
-          x: document.getElementById("curve_x").value.trim() || "0",
-          y: document.getElementById("curve_y").value.trim() || "0",
-          z: document.getElementById("curve_z").value.trim() || "0",
-        };
-      } else {
+      
+      const var1El = document.getElementById("var1");
+      const coord1El = document.getElementById("coord1");
+      const coord2El = document.getElementById("coord2");
+      const coord3El = document.getElementById("coord3");
+      
+      params.var = var1El && var1El.value.trim() ? var1El.value.trim() : "t";
+      params.exprs = {
+        x: coord1El && coord1El.value.trim() ? coord1El.value.trim() : "0",
+        y: coord2El && coord2El.value.trim() ? coord2El.value.trim() : "0",
+        z: coord3El && coord3El.value.trim() ? coord3El.value.trim() : "0",
+      };
+
+      
+      if (curve === "line" || curve === "custom_curve") {
         const inputs = curveParamsDiv.querySelectorAll("input");
         inputs.forEach((inp) => {
           const name = inp.id.replace("param_", "");
-          params[name] = inp.value;
+          if (name && inp.value) {
+            params[name] = inp.value;
+          }
         });
       }
 
-      const t0 = parseFloat(document.getElementById("t0").value);
-      const t1 = parseFloat(document.getElementById("t1").value);
-      const n = parseInt(document.getElementById("n").value) || 400;
+      const t0El = document.getElementById("t0");
+      const t1El = document.getElementById("t1");
+      const nEl = document.getElementById("n");
+      const t0 = t0El ? t0El.value.trim() : "0";
+      const t1 = t1El ? t1El.value.trim() : "2*pi";
+      const n = nEl ? parseInt(nEl.value) || 400 : 400;
 
       const symbolic_quantity = quantitySelect.value; // curves: arc_length, reparam_arc_length, frenet
 
@@ -322,8 +477,20 @@ computeBtn.addEventListener("click", async () => {
         return;
       }
 
+      
+      if (!data.x || !data.y || !data.z || !data.t ||
+          !Array.isArray(data.x) || !Array.isArray(data.y) ||
+          !Array.isArray(data.z) || !Array.isArray(data.t) ||
+          data.x.length === 0 || data.y.length === 0 ||
+          data.z.length === 0 || data.t.length === 0) {
+        infoDiv.textContent = "Error: Invalid response from server - missing or invalid data arrays";
+        return;
+      }
+
       const is3D = data.z.some((z) => Math.abs(z) > 1e-10);
       let trace;
+      let layout;
+      
       if (is3D) {
         trace = {
           type: "scatter3d",
@@ -331,7 +498,30 @@ computeBtn.addEventListener("click", async () => {
           x: data.x,
           y: data.y,
           z: data.z,
-          line: { width: 4 },
+          line: { width: 4, color: "#4f46e5" },
+        };
+        
+        
+        const xRange = [Math.min(...data.x), Math.max(...data.x)];
+        const yRange = [Math.min(...data.y), Math.max(...data.y)];
+        const zRange = [Math.min(...data.z), Math.max(...data.z)];
+        
+        const xPadding = (xRange[1] - xRange[0]) * 0.1 || 1;
+        const yPadding = (yRange[1] - yRange[0]) * 0.1 || 1;
+        const zPadding = (zRange[1] - zRange[0]) * 0.1 || 1;
+        
+        layout = {
+          title: "Curve",
+          margin: { l: 0, r: 0, t: 30, b: 0 },
+          scene: {
+            aspectmode: "auto",
+            xaxis: { range: [xRange[0] - xPadding, xRange[1] + xPadding] },
+            yaxis: { range: [yRange[0] - yPadding, yRange[1] + yPadding] },
+            zaxis: { range: [zRange[0] - zPadding, zRange[1] + zPadding] },
+            camera: {
+              eye: { x: 1.5, y: 1.5, z: 1.5 }
+            }
+          },
         };
       } else {
         trace = {
@@ -339,15 +529,37 @@ computeBtn.addEventListener("click", async () => {
           mode: "lines",
           x: data.x,
           y: data.y,
-          line: { width: 3 },
+          line: { width: 3, color: "#4f46e5" },
+        };
+        
+        
+        const xRange = [Math.min(...data.x), Math.max(...data.x)];
+        const yRange = [Math.min(...data.y), Math.max(...data.y)];
+        
+        const xPadding = (xRange[1] - xRange[0]) * 0.1 || 1;
+        const yPadding = (yRange[1] - yRange[0]) * 0.1 || 1;
+        
+        layout = {
+          title: "Curve",
+          margin: { l: 50, r: 20, t: 30, b: 50 },
+          xaxis: {
+            range: [xRange[0] - xPadding, xRange[1] + xPadding],
+            title: "x",
+            showgrid: true,
+            zeroline: true,
+          },
+          yaxis: {
+            range: [yRange[0] - yPadding, yRange[1] + yPadding],
+            title: "y",
+            showgrid: true,
+            zeroline: true,
+            scaleanchor: "x",
+            scaleratio: 1,
+          },
         };
       }
 
-      Plotly.newPlot(plotDiv, [trace], {
-        title: "Curve",
-        margin: { l: 0, r: 0, t: 30, b: 0 },
-        scene: { aspectmode: "auto" },
-      });
+      Plotly.newPlot(plotDiv, [trace], layout);
 
       let html = "<h3>Curve Results</h3>";
       html += `<p>Points: ${data.x.length}</p>`;
@@ -355,14 +567,17 @@ computeBtn.addEventListener("click", async () => {
       html +=
         "<table><tr><th>t</th><th>x</th><th>y</th><th>z</th><th>κ</th><th>τ</th><th>s</th></tr>";
       idxs.forEach((i) => {
+        const kappa = data.curvature && data.curvature[i] !== null ? data.curvature[i].toFixed(4) : "—";
+        const tau = data.torsion && data.torsion[i] !== null ? data.torsion[i].toFixed(4) : "—";
+        const arc = data.arc_length && data.arc_length[i] !== null ? data.arc_length[i].toFixed(4) : "—";
         html += `<tr>
           <td>${data.t[i].toFixed(4)}</td>
           <td>${data.x[i].toFixed(4)}</td>
           <td>${data.y[i].toFixed(4)}</td>
           <td>${data.z[i].toFixed(4)}</td>
-          <td>${data.curvature[i] === null ? "—" : data.curvature[i]}</td>
-          <td>${data.torsion[i] === null ? "—" : data.torsion[i]}</td>
-          <td>${data.arc_length[i].toFixed(4)}</td>
+          <td>${kappa}</td>
+          <td>${tau}</td>
+          <td>${arc}</td>
         </tr>`;
       });
       html += "</table>";
@@ -376,36 +591,47 @@ computeBtn.addEventListener("click", async () => {
       }
       infoDiv.innerHTML = html;
 
-      // Ask MathJax to typeset the new content
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        MathJax.typesetPromise([infoDiv]).catch((err) => console.error(err));
-      }
+      
+      latexTypeset(infoDiv);
     } else {
       // Surface mode
       const surface = surfaceSelect.value;
       let params = {};
 
-      if (surface === "custom_surface") {
-        params.x = document.getElementById("surf_x").value.trim() || "0";
-        params.y = document.getElementById("surf_y").value.trim() || "0";
-        params.z = document.getElementById("surf_z").value.trim() || "0";
-      } else {
-        const inputs = surfaceParamsDiv.querySelectorAll("input");
-        inputs.forEach((inp) => {
-          const name = inp.id.replace("surf_param_", "");
-          params[name] = inp.value;
-        });
-      }
+      
+      const usEl = document.getElementById("us");
+      const vsEl = document.getElementById("vs");
+      const usxEl = document.getElementById("usx");
+      const usyEl = document.getElementById("usy");
+      const uszEl = document.getElementById("usz");
+      params.u = usEl ? usEl.value.trim() || "u" : "u";
+      params.v = vsEl ? vsEl.value.trim() || "v" : "v";
+      params.x = usxEl ? usxEl.value.trim() : "0";
+      params.y = usyEl ? usyEl.value.trim() : "0";
+      params.z = uszEl ? uszEl.value.trim() : "0";
 
-      params.u0 = parseFloat(document.getElementById("u0").value);
-      params.u1 = parseFloat(document.getElementById("u1").value);
-      params.v0 = parseFloat(document.getElementById("v0").value);
-      params.v1 = parseFloat(document.getElementById("v1").value);
-      params.nu = parseInt(document.getElementById("nu").value) || 60;
-      params.nv = parseInt(document.getElementById("nv").value) || 60;
+      
+      const inputs = surfaceParamsDiv.querySelectorAll("input");
+      inputs.forEach((inp) => {
+        const name = inp.id.replace("surf_param_", "");
+        params[name] = inp.value;
+      });
+
+      const u0El = document.getElementById("u0");
+      const u1El = document.getElementById("u1");
+      const v0El = document.getElementById("v0");
+      const v1El = document.getElementById("v1");
+      const nuEl = document.getElementById("nu");
+      const nvEl = document.getElementById("nv");
+      params.u0 = u0El ? u0El.value.trim() : "0";
+      params.u1 = u1El ? u1El.value.trim() : "2*pi";
+      params.v0 = v0El ? v0El.value.trim() : "0";
+      params.v1 = v1El ? v1El.value.trim() : "2*pi";
+      params.nu = nuEl ? parseInt(nuEl.value) || 60 : 60;
+      params.nv = nvEl ? parseInt(nvEl.value) || 60 : 60;
 
       const compute_symbolic = document.getElementById("compute_symbolic").checked;
-      const symbolic_quantity = quantitySelect.value; // surfaces: first_form, second_form, etc.
+      const symbolic_quantity = quantitySelect.value; // surfaces: first_form, second_form, gaussian_curvature, mean_curvature, principal_curvatures, ...
 
       const payload = {
         mode: "surface",
@@ -439,32 +665,50 @@ computeBtn.addEventListener("click", async () => {
         return;
       }
 
+      
+      if (!data.X || !data.Y || !data.Z ||
+          !Array.isArray(data.X) || !Array.isArray(data.Y) || !Array.isArray(data.Z) ||
+          data.X.length === 0 || data.Y.length === 0 || data.Z.length === 0) {
+        infoDiv.textContent = "Error: Invalid response from server - missing or invalid surface data arrays";
+        return;
+      }
+
       const X = data.X;
       const Y = data.Y;
       const Z = data.Z;
 
-      const flatX = [];
-      const flatY = [];
-      const flatZ = [];
-      for (let i = 0; i < X.length; i++) {
-        for (let j = 0; j < X[0].length; j++) {
-          flatX.push(X[i][j]);
-          flatY.push(Y[i][j]);
-          flatZ.push(Z[i][j]);
-        }
+      
+      const quantity = symbolic_quantity;
+      let colorField = Z;
+      let colorbarTitle = "Height (z)";
+
+      if (quantity === "gaussian_curvature" && data.K) {
+        colorField = data.K;
+        colorbarTitle = "Gaussian curvature K";
+      } else if (quantity === "mean_curvature" && data.H) {
+        colorField = data.H;
+        colorbarTitle = "Mean curvature H";
+      } else if (quantity === "principal_curvatures" && data.k1) {
+        
+        colorField = data.k1;
+        colorbarTitle = "Principal curvature k₁";
       }
 
-      const mesh = [
-        {
-          type: "mesh3d",
-          x: flatX,
-          y: flatY,
-          z: flatZ,
-          opacity: 0.9,
+      const surfaceTrace = {
+        type: "surface",
+        x: X,
+        y: Y,
+        z: Z,
+        surfacecolor: colorField,
+        colorscale: "Viridis",
+        showscale: true,
+        colorbar: {
+          title: colorbarTitle,
+          thickness: 15,
         },
-      ];
+      };
 
-      Plotly.newPlot(plotDiv, mesh, {
+      Plotly.newPlot(plotDiv, [surfaceTrace], {
         title: "Surface",
         margin: { l: 0, r: 0, t: 30, b: 0 },
         scene: { aspectmode: "auto" },
@@ -482,15 +726,15 @@ computeBtn.addEventListener("click", async () => {
       }
       infoDiv.innerHTML = html;
 
-      // Ask MathJax to typeset the new content
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        MathJax.typesetPromise([infoDiv]).catch((err) => console.error(err));
-      }
+      latexTypeset(infoDiv);
     }
   } catch (err) {
     console.error(err);
-    computeBtn.disabled = false;
-    computeBtn.textContent = "Compute & Plot";
-    infoDiv.textContent = "Error in browser: " + err.message;
+    if (computeBtn) {
+      computeBtn.disabled = false;
+      computeBtn.textContent = "Compute & Plot";
+    }
+    if (infoDiv) infoDiv.textContent = "Error in browser: " + err.message;
   }
-});
+  });
+}

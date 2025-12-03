@@ -51,9 +51,7 @@ transformations = (
 )
 
 
-# ---------------------------------------------------------
-# Build symbol table dynamically
-# ---------------------------------------------------------
+
 def build_local_dict(parameters):
     """
     Build a SymPy local_dict where:
@@ -64,7 +62,7 @@ def build_local_dict(parameters):
 
     local = {}
 
-    # Symbols
+    
     for name in english_letters + greek_letters:
         if name in variables:
             local[name] = Symbol(name, real=True)
@@ -77,9 +75,7 @@ def build_local_dict(parameters):
     return local
 
 
-# ---------------------------------------------------------
-# Parse general expression
-# ---------------------------------------------------------
+
 def parse_input(expr_string: str, parameters: list):
     """
     Parse plaintext input into a SymPy expression:
@@ -101,9 +97,7 @@ def parse_input(expr_string: str, parameters: list):
         raise ValueError(f"Invalid expression: {expr_string}\nError: {e}")
 
 
-# ---------------------------------------------------------
-# NEW: Parse bounds
-# ---------------------------------------------------------
+
 def parse_bounds(bounds: list, parameters: list):
     """
     Parse a list of two string bounds:
@@ -144,9 +138,7 @@ def parse_bounds(bounds: list, parameters: list):
         raise ValueError(f"Invalid bounds: {bounds}\nError: {e}")
 
 
-# ---------------------------------------------------------
-# Identify constants
-# ---------------------------------------------------------
+
 def find_constants(parametrization, parameters):
     """
     Identify constants in parametrization (not variables)
