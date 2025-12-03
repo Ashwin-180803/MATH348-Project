@@ -113,8 +113,6 @@ const surfaceDefaults = {
 };
 
 
-
-
 /* Curve handler */
 document.getElementById("curve").addEventListener("change", () => {
     const c = curve.value;

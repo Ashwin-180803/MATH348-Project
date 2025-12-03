@@ -21,7 +21,7 @@ def compute(request):
         return JsonResponse({"ok": False, "error": "Invalid JSON"}, status=400)
 
     mode = data.get("mode", "curve")
-
+    print(data)
     # CURVE
     if mode == "curve":
         try:
