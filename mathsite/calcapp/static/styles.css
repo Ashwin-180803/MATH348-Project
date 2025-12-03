@@ -49,7 +49,8 @@ body {
 .controls select,
 .controls input,
 .controls textarea {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   margin-top: 0.3rem;
   padding: 0.35rem 0.5rem;
   border-radius: 8px;
@@ -74,8 +75,10 @@ body {
   margin-bottom: 0.25rem;
   width: 100%;
   display: flex;
-  justify-content: center;   /* centers the tabs */
-  gap: 1rem;                  /* spacing between tabs */
+  justify-content: center;
+  /* centers the tabs */
+  gap: 1rem;
+  /* spacing between tabs */
 }
 
 .sub-tabs {
@@ -97,9 +100,12 @@ body {
 
 /* Only main tabs bold + slightly larger */
 .main-tabs .tab {
-  font-weight: 700;          /* bold */
-  font-size: 1rem;           /* slightly larger text */
-  padding: 0.4rem 1.2rem;    /* balanced bigger pill */
+  font-weight: 700;
+  /* bold */
+  font-size: 1rem;
+  /* slightly larger text */
+  padding: 0.4rem 1.2rem;
+  /* balanced bigger pill */
 }
 
 
@@ -130,6 +136,42 @@ body {
   background: #ffffff;
 }
 
+.curve-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap;
+}
+
+/* Curve dropdown width */
+.curve-select {
+  width: 20ch;
+}
+
+.param-display {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1.1rem;
+}
+
+.var-input {
+  width: 1ch;
+  text-align: center;
+}
+
+.coord-input {
+  width: 14ch;
+  text-align: center;
+}
+
+.surface-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap;
+}
+
 /* Parameter rows */
 .param-row {
   display: flex;
@@ -150,7 +192,7 @@ body {
 }
 
 /* Make inline “to” / “x” text not stretch */
-.param-row input + span,
+.param-row input+span,
 .param-row span.inline-label {
   flex: 0 0 auto;
 }
