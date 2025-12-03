@@ -103,7 +103,7 @@ const surfaceDefaults = {
         z: "(sin(u/2) * (sqrt(2)+cos(v)) - cos(u/2) * sin(v))"
     },
 
-    ennerper: {
+    enneper: {
         u: "u",
         v: "v",
         x: "u - (u^3)/3 + u*v^2",
