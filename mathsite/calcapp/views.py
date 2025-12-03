@@ -87,14 +87,38 @@ def compute(request):
                     except Exception as e:
                         symbolic["frenet_error"] = str(e)
 
-            # Get variable parameter, parametrization, and t-range as string lists
-            variable_param = params.get("var", "t")
-            exprs = params.get("exprs", {})
-            x_expr = exprs.get("x", "x(t)")
-            y_expr = exprs.get("y", "y(t)")
-            z_expr = exprs.get("z", "z(t)")
             
-            # Format as string lists
+            exprs = params.get("exprs", {})
+            var_provided = params.get("var", "").strip()
+            x_provided = exprs.get("x", "").strip() if exprs.get("x") else ""
+            y_provided = exprs.get("y", "").strip() if exprs.get("y") else ""
+            z_provided = exprs.get("z", "").strip() if exprs.get("z") else ""
+            
+            
+            default_exprs = functions.get_default_curve_expressions(curve, params)
+            
+            
+            has_custom_input = (
+                (var_provided and var_provided != "t") or
+                (x_provided and x_provided != "0") or
+                (y_provided and y_provided != "0") or
+                (z_provided and z_provided != "0")
+            )
+            
+            if not has_custom_input:
+                
+                variable_param = "t"  
+                x_expr = default_exprs["x"]
+                y_expr = default_exprs["y"]
+                z_expr = default_exprs["z"]
+            else:
+                
+                variable_param = var_provided if var_provided else "t"
+                x_expr = x_provided if x_provided and x_provided != "0" else default_exprs["x"]
+                y_expr = y_provided if y_provided and y_provided != "0" else default_exprs["y"]
+                z_expr = z_provided if z_provided and z_provided != "0" else default_exprs["z"]
+            
+            
             variable_param_str = f'["{variable_param}"]'
             parametrization_str = f'["{x_expr}", "{y_expr}", "{z_expr}"]'
             trange_str = f'["{t0_str}", "{t1_str}"]'
@@ -138,7 +162,7 @@ def compute(request):
             v0 = functions.parse_range_value(v0_str, 0.0)
             v1 = functions.parse_range_value(v1_str, 2 * 3.141592653589793)
 
-            
+            # Get variable names (will be updated later if using defaults)
             var_u = params.get("u", "u")
             var_v = params.get("v", "v")
 
@@ -260,12 +284,43 @@ def compute(request):
                         symbolic["codazzi_eq_error"] = str(e)
 
             
-            x_expr = exprs_num.get("x", "u")
-            y_expr = exprs_num.get("y", "v")
-            z_expr = exprs_num.get("z", "0")
             
-            # Format as string lists
-            parameters_str = f'["{var_u}", "{var_v}"]'
+            default_surface_exprs = functions.get_default_surface_expressions(surface, params)
+            
+            
+            u_provided = params.get("u", "").strip()
+            v_provided = params.get("v", "").strip()
+            x_provided = params.get("x", "").strip()
+            y_provided = params.get("y", "").strip()
+            z_provided = params.get("z", "").strip()
+            
+            has_custom_input = (
+                (u_provided and u_provided != "u") or
+                (v_provided and v_provided != "v") or
+                (x_provided and x_provided != "0") or
+                (y_provided and y_provided != "0") or
+                (z_provided and z_provided != "0")
+            )
+            
+            
+            if not has_custom_input:
+                
+                return_var_u = "u"  
+                return_var_v = "v"  
+                
+                x_expr = default_surface_exprs["x"]
+                y_expr = default_surface_exprs["y"]
+                z_expr = default_surface_exprs["z"]
+            else:
+                
+                return_var_u = var_u
+                return_var_v = var_v
+                x_expr = exprs_num.get("x", default_surface_exprs["x"])
+                y_expr = exprs_num.get("y", default_surface_exprs["y"])
+                z_expr = exprs_num.get("z", default_surface_exprs["z"])
+            
+            
+            parameters_str = f'["{return_var_u}", "{return_var_v}"]'
             parametrization_str = f'["{x_expr}", "{y_expr}", "{z_expr}"]'
             urange_str = f'["{u0_str}", "{u1_str}"]'
             vrange_str = f'["{v0_str}", "{v1_str}"]'

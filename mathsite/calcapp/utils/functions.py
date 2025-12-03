@@ -36,6 +36,79 @@ def parse_range_value(expr_str, default=0.0):
 # Curves
 
 
+def get_default_curve_expressions(curve, params):
+    """Get the default expressions for a curve type as strings, matching param_script.js defaults"""
+    if curve == "helix":
+        return {
+            "x": "cos(t)",
+            "y": "sin(t)",
+            "z": "0.2*t",
+        }
+    
+    if curve == "circle":
+        return {
+            "x": "cos(t)",
+            "y": "sin(t)",
+            "z": "0",
+        }
+    
+    if curve == "ellipse":
+        return {
+            "x": "2*cos(t)",
+            "y": "sin(t)",
+            "z": "0",
+        }
+    
+    if curve == "line":
+        return {
+            "x": "x0 + t*(x1-x0)",
+            "y": "y0 + t*(y1-y0)",
+            "z": "z0 + t*(z1-z0)",
+        }
+    
+    if curve == "cycloid":
+        return {
+            "x": "t - sin(t)",
+            "y": "1 - cos(t)",
+            "z": "0",
+        }
+    
+    if curve == "twisted_cubic":
+        return {
+            "x": "t",
+            "y": "t^2",
+            "z": "t^3",
+        }
+    
+    if curve == "catenary":
+        return {
+            "x": "t",
+            "y": "cosh(t/2)",
+            "z": "0",
+        }
+    
+    if curve == "hyperbola":
+        return {
+            "x": "cosh(t)",
+            "y": "sinh(t)",
+            "z": "0",
+        }
+    
+    if curve == "tractrix":
+        return {
+            "x": "t - tanh(t)",
+            "y": "sech(t)",
+            "z": "0",
+        }
+    
+    # Default fallback for custom_curve or unknown
+    return {
+        "x": "0",
+        "y": "0",
+        "z": "0",
+    }
+
+
 def numeric_curve_positions(curve_name, params, t0, t1, n):
     t = np.linspace(t0, t1, n)
 
@@ -189,32 +262,7 @@ def numeric_curve_positions(curve_name, params, t0, t1, n):
 
 
 def get_default_surface_expressions(surface, params):
-    """Get the default expressions for a surface type"""
-    if surface == "sphere":
-        r = float(params.get("r", 1.0))
-        return {
-            "x": f"{r}*sin(u)*cos(v)",
-            "y": f"{r}*sin(u)*sin(v)",
-            "z": f"{r}*cos(u)",
-        }
-
-    if surface == "torus":
-        R = float(params.get("R", 1.0))
-        r = float(params.get("r", 0.4))
-        return {
-            "x": f"({R} + {r}*cos(u))*cos(v)",
-            "y": f"({R} + {r}*cos(u))*sin(v)",
-            "z": f"{r}*sin(u)",
-        }
-
-    if surface == "paraboloid":
-        a = float(params.get("a", 1.0))
-        return {
-            "x": "u*cos(v)",
-            "y": "u*sin(v)",
-            "z": f"{a}*u**2",
-        }
-
+    """Get the default expressions for a surface type, matching param_script.js defaults"""
     if surface == "plane":
         return {
             "x": "u",
@@ -236,11 +284,32 @@ def get_default_surface_expressions(surface, params):
             "z": "v",
         }
 
+    if surface == "paraboloid":
+        return {
+            "x": "u",
+            "y": "v",
+            "z": "u^2 + v^2",
+        }
+
     if surface == "hyperbolic_paraboloid":
         return {
             "x": "u",
             "y": "v",
-            "z": "u**2 - v**2",
+            "z": "u^2 - v^2",
+        }
+
+    if surface == "sphere":
+        return {
+            "x": "cos(u) * sin(v)",
+            "y": "sin(u) * sin(v)",
+            "z": "cos(v)",
+        }
+
+    if surface == "torus":
+        return {
+            "x": "(R + r * cos(v)) * cos(u)",
+            "y": "(R + r * cos(v)) * sin(u)",
+            "z": "r * sin(v)",
         }
 
     if surface == "helicoid":
@@ -287,37 +356,35 @@ def get_default_surface_expressions(surface, params):
 
 
 def substitute_params_in_expr(expr_str, params, surface):
-    """
-    Substitute parameter values (like R, r, a, etc.) into expression strings.
-    Returns the expression string with parameters substituted.
-    """
+    import re
     if not expr_str:
         return expr_str
     
-    # Get parameter values based on surface type
+    
     substitutions = {}
     
     if surface == "torus":
-        if "R" in expr_str:
-            R_val = float(params.get("R", 1.0))
+        
+        R_val = float(params.get("R", 1.0))
+        r_val = float(params.get("r", 0.4))
+        
+        if re.search(r'\bR\b', expr_str):
             substitutions["R"] = str(R_val)
-        if "r" in expr_str:
-            r_val = float(params.get("r", 0.4))
+        if re.search(r'\br\b', expr_str):
             substitutions["r"] = str(r_val)
     elif surface == "sphere":
-        if "r" in expr_str:
-            r_val = float(params.get("r", 1.0))
+        r_val = float(params.get("r", 1.0))
+        if re.search(r'\br\b', expr_str):
             substitutions["r"] = str(r_val)
     elif surface == "paraboloid":
-        if "a" in expr_str:
-            a_val = float(params.get("a", 1.0))
+        a_val = float(params.get("a", 1.0))
+        if re.search(r'\ba\b', expr_str):
             substitutions["a"] = str(a_val)
     
-    # Perform substitutions using word boundaries to avoid partial matches
+    
     result = expr_str
     for param_name, param_value in substitutions.items():
-        # Use word boundaries to match whole parameter names only
-        # This prevents replacing "r" in "cos" or "cosh"
+        
         pattern = r'\b' + re.escape(param_name) + r'\b'
         result = re.sub(pattern, param_value, result)
     
@@ -337,7 +404,7 @@ def get_surface_expressions(surface, params):
     if (x_expr and x_expr != "0" and x_expr != default_exprs["x"]) or \
        (y_expr and y_expr != "0" and y_expr != default_exprs["y"]) or \
        (z_expr and z_expr != "0" and z_expr != default_exprs["z"]):
-        # Substitute parameters in custom expressions
+        
         x_expr = substitute_params_in_expr(x_expr, params, surface)
         y_expr = substitute_params_in_expr(y_expr, params, surface)
         z_expr = substitute_params_in_expr(z_expr, params, surface)
@@ -347,7 +414,13 @@ def get_surface_expressions(surface, params):
             "z": z_expr,
         }
 
-    return default_exprs
+    
+    default_exprs_substituted = {
+        "x": substitute_params_in_expr(default_exprs["x"], params, surface),
+        "y": substitute_params_in_expr(default_exprs["y"], params, surface),
+        "z": substitute_params_in_expr(default_exprs["z"], params, surface),
+    }
+    return default_exprs_substituted
 
 
 def mesh_from_parametric_surfaces(exprs, u_range, v_range, nu, nv, var_u="u", var_v="v"):
@@ -375,10 +448,7 @@ def mesh_from_parametric_surfaces(exprs, u_range, v_range, nu, nv, var_u="u", va
 
 
 def symbolic_formula_for(curve, params):
-    """
-    Return a SymPy Matrix parametrization r(t) for the chosen curve.
-    (Views.py will later convert this to LaTeX with sp.latex.)
-    """
+    
     t = sp.symbols("t")
 
     if curve == "line":
@@ -1101,15 +1171,11 @@ def compute_numeric_frenet_serret(t, R):
     # Second derivatives (acceleration)
     dT_dt = np.gradient(T, t, axis=0)
 
-    # Curvature kappa = |dT/ds| where s is arc length parameter
-    # Since ds/dt = speed, we have kappa = |dT/dt| / |dr/dt|
+    
     curvature_magnitude = np.linalg.norm(dT_dt, axis=1)
     curvature = curvature_magnitude / speed
 
-    # For torsion, we need the binormal vector evolution
-    # This is more complex and requires computing the torsion numerically
-    # For now, we'll set torsion to None (not computed)
-    # A full implementation would require computing dB/ds where B is the binormal
+    
 
     return {
         "curvature": curvature.tolist(),
