@@ -47,7 +47,7 @@ def assert_unit_normals_equal(n1, n2):
 def test_plane_numeric():
     u, v = sp.symbols("u v", real=True)
     X = parse_input("[u, v, 0]", str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([0, 0, 1])
     assert_unit_normals_equal(N, expected)
 
@@ -56,7 +56,7 @@ def test_plane_symbolic():
     u, v = sp.symbols("u v", real=True)
     a, b, c, d = sp.symbols("a b c d", real=True, positive=True)
     X = parse_input(str([a * u + b * v, c * u + d * v, 0]), str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
 
     expected = sp.Matrix([0, 0, 1])
 
@@ -73,7 +73,7 @@ def test_cylinder_numeric():
     u, v = sp.symbols("u v", real=True)
     R = 3
     X = parse_input(str([R * sp.cos(u), R * sp.sin(u), v]), str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([sp.cos(u), sp.sin(u), 0])
     assert_unit_normals_equal(N, expected)
 
@@ -82,7 +82,7 @@ def test_cylinder_symbolic():
     u, v = sp.symbols("u v", real=True)
     a, b = sp.symbols("a b", real=True, positive=True)
     X = parse_input(str([a * sp.cos(u), a * sp.sin(u), b * v]), str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([sp.cos(u), sp.sin(u), 0])
     assert_unit_normals_equal(N, expected)
 
@@ -100,7 +100,7 @@ def test_sphere_numeric():
         str([R * sp.sin(u) * sp.cos(v), R * sp.sin(u) * sp.sin(v), R * sp.cos(u)]),
         str([u, v]),
     )
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([sp.sin(u) * sp.cos(v), sp.sin(u) * sp.sin(v), sp.cos(u)])
     assert_unit_normals_equal(N, expected)
 
@@ -112,7 +112,7 @@ def test_sphere_symbolic():
         str([a * sp.sin(u) * sp.cos(v), a * sp.sin(u) * sp.sin(v), a * sp.cos(u)]),
         str([u, v]),
     )
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([sp.sin(u) * sp.cos(v), sp.sin(u) * sp.sin(v), sp.cos(u)])
     assert_unit_normals_equal(N, expected)
 
@@ -137,7 +137,7 @@ def test_torus_numeric():
         ),
         str([u, v]),
     )
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([sp.cos(u) * sp.cos(v), sp.sin(u) * sp.cos(v), sp.sin(v)])
     assert_unit_normals_equal(N, expected)
 
@@ -155,7 +155,7 @@ def test_torus_symbolic():
         ),
         str([u, v]),
     )
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([sp.cos(u) * sp.cos(v), sp.sin(u) * sp.cos(v), sp.sin(v)])
     assert_unit_normals_equal(N, expected)
 
@@ -169,7 +169,7 @@ def test_torus_symbolic():
 def test_paraboloid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = parse_input(str([u, v, u**2 + v**2]), str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([-2 * u, -2 * v, 1])
     assert_unit_normals_equal(N, expected)
 
@@ -178,7 +178,7 @@ def test_paraboloid_symbolic():
     u, v = sp.symbols("u v", real=True)
     a, b = sp.symbols("a b", real=True, positive=True)
     X = parse_input(str([u, v, a * u**2 + b * v**2]), str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([-2 * a * u, -2 * b * v, 1])
     assert_unit_normals_equal(N, expected)
 
@@ -192,7 +192,7 @@ def test_paraboloid_symbolic():
 def test_hyperbolic_paraboloid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = parse_input(str([u, v, u**2 - v**2]), str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([-2 * u, 2 * v, 1])
     assert_unit_normals_equal(N, expected)
 
@@ -201,7 +201,7 @@ def test_hyperbolic_paraboloid_symbolic():
     u, v = sp.symbols("u v", real=True)
     a, b = sp.symbols("a b", real=True, positive=True)
     X = parse_input(str([u, v, a * u**2 - b * v**2]), str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     expected = sp.Matrix([-2 * a * u, 2 * b * v, 1])
     assert_unit_normals_equal(N, expected)
 
@@ -215,7 +215,7 @@ def test_hyperbolic_paraboloid_symbolic():
 def test_elliptic_surface_numeric():
     u, v = sp.symbols("u v", real=True)
     X = parse_input(str([u + v, u - v, u * v]), str([u, v]))
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     Xu = sp.Matrix([1, 1, v])
     Xv = sp.Matrix([1, -1, u])
     expected = Xu.cross(Xv)
@@ -229,7 +229,7 @@ def test_elliptic_surface_symbolic():
     Xu = sp.Matrix([1, a, a * b * v])
     Xv = sp.Matrix([1, -b, a * b * u])
     expected = Xu.cross(Xv)
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     assert_unit_normals_equal(N, expected)
 
 
@@ -247,7 +247,7 @@ def test_catenoid_numeric():
     expected = sp.Matrix(
         [[sp.cos(u) / sp.cosh(v)], [sp.sin(u) / sp.cosh(v)], [-sp.tanh(v)]]
     )
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     assert_unit_normals_equal(N, expected)
 
 
@@ -265,7 +265,7 @@ def test_catenoid_symbolic():
             [-a * sp.sinh(v) / sp.sqrt(a**2 * sp.sinh(v) ** 2 + b**2)],
         ]
     )
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
 
     assert_unit_normals_equal(N, expected)
 
@@ -282,7 +282,7 @@ def test_helicoid_numeric():
     Xu = sp.Matrix([sp.cos(v), sp.sin(v), 0])
     Xv = sp.Matrix([-u * sp.sin(v), u * sp.cos(v), 1])
     expected = Xu.cross(Xv)
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     assert_unit_normals_equal(N, expected)
 
 
@@ -297,7 +297,7 @@ def test_helicoid_symbolic():
             [a * u / sp.sqrt(a**2 * u**2 + b**2)],
         ]
     )
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
 
     assert_unit_normals_equal(N, expected)
 
@@ -314,7 +314,7 @@ def test_weird_surface_numeric():
     Xu = sp.Matrix([2 * u * v, v**2, sp.exp(u + v)])
     Xv = sp.Matrix([u**2, 2 * u * v, sp.exp(u + v)])
     expected = Xu.cross(Xv)
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     assert_unit_normals_equal(N, expected)
 
 
@@ -327,5 +327,5 @@ def test_weird_surface_symbolic():
     Xu = sp.Matrix([2 * a * u * v, b * v**2, a * sp.exp(a * u + b * v)])
     Xv = sp.Matrix([a * u**2, 2 * b * u * v, b * sp.exp(a * u + b * v)])
     expected = Xu.cross(Xv)
-    N = compute_unit_normal_vector(X, [u, v])
+    N, _ = compute_unit_normal_vector(X, [u, v])
     assert_unit_normals_equal(N, expected)

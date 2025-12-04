@@ -54,7 +54,7 @@ def test_plane_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, 0]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[1, 0], [0, 1]])
     assert_matrix_equal(M, expected)
 
@@ -64,7 +64,7 @@ def test_plane_symbolic():
     a, b, c, d = sp.symbols("a b c d", real=True, positive=True)
     X = [a * u + b * v, c * u + d * v, 0]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[a**2 + c**2, a * b + c * d], [a * b + c * d, b**2 + d**2]])
 
     assert_matrix_equal(M, expected)
@@ -81,7 +81,7 @@ def test_cylinder_numeric():
     R = 2.7
     X = [R * sp.cos(u), R * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[R**2, 0], [0, 1]])
     assert_matrix_equal(M, expected)
 
@@ -91,7 +91,7 @@ def test_cylinder_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [a * sp.cos(u), a * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[a**2, 0], [0, b**2]])
     assert_matrix_equal(M, expected)
 
@@ -107,7 +107,7 @@ def test_sphere_numeric():
     R = 1.8
     X = [R * sp.sin(u) * sp.cos(v), R * sp.sin(u) * sp.sin(v), R * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[R**2, 0], [0, R**2 * sp.sin(u) ** 2]])
     assert_matrix_equal(M, expected)
 
@@ -117,7 +117,7 @@ def test_sphere_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [a * sp.sin(u) * sp.cos(v), a * sp.sin(u) * sp.sin(v), a * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[a**2, 0], [0, a**2 * sp.sin(u) ** 2]])
     assert_matrix_equal(M, expected)
 
@@ -138,7 +138,7 @@ def test_torus_numeric():
         r * sp.sin(v),
     ]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[(R + r * sp.cos(v)) ** 2, 0], [0, r**2]])
     assert_matrix_equal(M, expected)
 
@@ -152,7 +152,7 @@ def test_torus_symbolic():
         b * sp.sin(v),
     ]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[(a + b * sp.cos(v)) ** 2, 0], [0, b**2]])
     assert_matrix_equal(M, expected)
 
@@ -167,7 +167,7 @@ def test_paraboloid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, u**2 + v**2]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[1 + 4 * u**2, 4 * u * v], [4 * u * v, 1 + 4 * v**2]])
     assert_matrix_equal(M, expected)
 
@@ -177,7 +177,7 @@ def test_paraboloid_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [u, v, a * u**2 + b * v**2]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix(
         [
             [1 + (2 * a * u) ** 2, (2 * a * u) * (2 * b * v)],
@@ -197,7 +197,7 @@ def test_hyperbolic_paraboloid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, u**2 - v**2]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[1 + 4 * u**2, -4 * u * v], [-4 * u * v, 1 + 4 * v**2]])
     assert_matrix_equal(M, expected)
 
@@ -207,7 +207,7 @@ def test_hyperbolic_paraboloid_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [u, v, a * u**2 - b * v**2]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix(
         [
             [1 + (2 * a * u) ** 2, (2 * a * u) * (-2 * b * v)],
@@ -227,7 +227,7 @@ def test_elliptic_surface_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u + v, u - v, u * v]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[2 + v**2, u * v], [u * v, 2 + u**2]])
     assert_matrix_equal(M, expected)
 
@@ -240,7 +240,7 @@ def test_elliptic_surface_symbolic():
     Xu = sp.Matrix([1, a, a * b * v])
     Xv = sp.Matrix([1, -b, a * b * u])
     expected = sp.Matrix([[Xu.dot(Xu), Xu.dot(Xv)], [Xu.dot(Xv), Xv.dot(Xv)]])
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     assert_matrix_equal(M, expected)
 
 
@@ -254,7 +254,7 @@ def test_catenoid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [sp.cosh(v) * sp.cos(u), sp.cosh(v) * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[sp.cosh(v) ** 2, 0], [0, sp.cosh(v) ** 2]])
     assert_matrix_equal(M, expected)
 
@@ -264,7 +264,7 @@ def test_catenoid_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [a * sp.cosh(v) * sp.cos(u), a * sp.cosh(v) * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     E = a**2 * sp.cosh(v) ** 2
     F = 0
     G = a**2 * sp.sinh(v) ** 2 + b**2
@@ -282,7 +282,7 @@ def test_helicoid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u * sp.cos(v), u * sp.sin(v), v]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[1, 0], [0, 1 + u**2]])
     assert_matrix_equal(M, expected)
 
@@ -292,7 +292,7 @@ def test_helicoid_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [a * u * sp.cos(v), a * u * sp.sin(v), b * v]
     X = parse_input(str(X), str([u, v]))
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     expected = sp.Matrix([[a**2, 0], [0, a**2 * u**2 + b**2]])
     assert_matrix_equal(M, expected)
 
@@ -310,7 +310,7 @@ def test_weird_surface_numeric():
     Xu = sp.Matrix([2 * u * v, v**2, sp.exp(u + v)])
     Xv = sp.Matrix([u**2, 2 * u * v, sp.exp(u + v)])
     expected = sp.Matrix([[Xu.dot(Xu), Xu.dot(Xv)], [Xu.dot(Xv), Xv.dot(Xv)]])
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     assert_matrix_equal(M, expected)
 
 
@@ -322,5 +322,5 @@ def test_weird_surface_symbolic():
     Xu = sp.Matrix([2 * a * u * v, b * v**2, a * sp.exp(a * u + b * v)])
     Xv = sp.Matrix([a * u**2, 2 * b * u * v, b * sp.exp(a * u + b * v)])
     expected = sp.Matrix([[Xu.dot(Xu), Xu.dot(Xv)], [Xu.dot(Xv), Xv.dot(Xv)]])
-    M = compute_first_fundamental_form(X, [u, v])
+    M, _ = compute_first_fundamental_form(X, [u, v])
     assert_matrix_equal(M, expected)

@@ -48,7 +48,9 @@ def test_codazzi_plane_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, 0]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = 0
     expected_second_rhs = 0
@@ -62,7 +64,9 @@ def test_codazzi_plane_symbolic():
     a, b, c, d = sp.symbols("a b c d", real=True, positive=True)
     X = [a * u + b * v, c * u + d * v, 0]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = 0
     expected_second_rhs = 0
@@ -79,7 +83,9 @@ def test_codazzi_cylinder_numeric():
     R = 2.7
     X = [R * sp.cos(u), R * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = 0
     expected_second_rhs = 0
@@ -94,7 +100,9 @@ def test_codazzi_cylinder_symbolic():
     X = [a * sp.cos(u), a * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
 
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = 0
     expected_second_rhs = 0
@@ -111,7 +119,9 @@ def test_codazzi_sphere_numeric():
     R = 1.8
     X = [R * sp.sin(u) * sp.cos(v), R * sp.sin(u) * sp.sin(v), R * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = 0
     expected_second_rhs = R * 2 * sp.sin(u) * sp.cos(u)
@@ -125,7 +135,9 @@ def test_codazzi_sphere_symbolic():
     a = sp.symbols("a", real=True, positive=True)
     X = [a * sp.sin(u) * sp.cos(v), a * sp.sin(u) * sp.sin(v), a * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = 0
     expected_second_rhs = a * 2 * sp.sin(u) * sp.cos(u)
@@ -146,7 +158,9 @@ def test_codazzi_torus_numeric():
         r * sp.sin(v),
     ]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = (R + 2 * r * sp.cos(v)) * sp.sin(v)
     expected_second_rhs = 0
@@ -164,7 +178,9 @@ def test_codazzi_torus_symbolic():
         b * sp.sin(v),
     ]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = (a + 2 * b * sp.cos(v)) * sp.sin(v)
     expected_second_rhs = 0
@@ -180,7 +196,9 @@ def test_codazzi_paraboloid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, u**2 + v**2]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = -8 * v / (4 * u**2 + 4 * v**2 + 1) ** (3 / 2)
     expected_second_rhs = 8 * u / (4 * u**2 + 4 * v**2 + 1) ** (3 / 2)
@@ -194,7 +212,9 @@ def test_codazzi_paraboloid_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [u, v, a * u**2 + b * v**2]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = (
         -8 * a * b**2 * v / (4 * a**2 * u**2 + 4 * b**2 * v**2 + 1) ** (3 / 2)
@@ -214,7 +234,9 @@ def test_codazzi_hyperbolic_paraboloid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, u**2 - v**2]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = -8 * v / (4 * u**2 + 4 * v**2 + 1) ** (3 / 2)
     expected_second_rhs = -8 * u / (4 * u**2 + 4 * v**2 + 1) ** (3 / 2)
@@ -228,7 +250,9 @@ def test_codazzi_hyperbolic_paraboloid_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [u, v, a * u**2 - b * v**2]
     X = parse_input(str(X), str([u, v]))
-    first_rhs, second_rhs, first_lhs, second_lhs = compute_codazzi_equations(X, [u, v])
+    first_rhs, second_rhs, first_lhs, second_lhs, _ = compute_codazzi_equations(
+        X, [u, v]
+    )
 
     expected_first_rhs = (
         -8 * a * b**2 * v / (4 * a**2 * u**2 + 4 * b**2 * v**2 + 1) ** (3 / 2)

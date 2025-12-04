@@ -87,6 +87,7 @@ def test_gauss_plane_numeric():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = 0
@@ -130,6 +131,7 @@ def test_gauss_plane_symbolic():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = 0
@@ -176,6 +178,7 @@ def test_gauss_cylinder_numeric():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = 0
@@ -219,6 +222,7 @@ def test_gauss_cylinder_symbolic():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = 0
@@ -265,6 +269,7 @@ def test_gauss_sphere_numeric():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = 1
@@ -309,6 +314,7 @@ def test_gauss_sphere_symbolic():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = 1
@@ -360,6 +366,7 @@ def test_gauss_torus_numeric():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = ((R + r * sp.cos(v)) * sp.cos(v)) / r
@@ -408,6 +415,7 @@ def test_gauss_torus_symbolic():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = ((a + b * sp.cos(v)) * sp.cos(v)) / b
@@ -453,6 +461,7 @@ def test_gauss_paraboloid_numeric():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = 4 * (1 + 4 * u**2) / ((1 + 4 * u**2 + 4 * v**2) ** 2)
@@ -497,8 +506,8 @@ def test_gauss_paraboloid_symbolic():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
-
     expected_first_rhs = (
         4 * a * b * (4 * a**2 * u**2 + 1) / (4 * a**2 * u**2 + 4 * b**2 * v**2 + 1) ** 2
     )
@@ -551,6 +560,7 @@ def test_gauss_hyperbolic_paraboloid_numeric():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = -4 * (1 + 4 * u**2) / ((1 + 4 * u**2 + 4 * v**2) ** 2)
@@ -594,6 +604,7 @@ def test_gauss_hyperbolic_paraboloid_symbolic():
         second_lhs,
         third_lhs,
         fourth_lhs,
+        _,
     ) = compute_gauss_equations(X, [u, v])
 
     expected_first_rhs = (

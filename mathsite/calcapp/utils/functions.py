@@ -593,12 +593,16 @@ def compute_unit_normal_vector(parametrization, parameters):
         The unit normal vector as a sp Matrix.
     """
 
+    steps = {}
+
     # Step 1 - Compute the partial derivatives
     X_u = Matrix([sp.diff(coord, parameters[0]) for coord in parametrization])
     X_v = Matrix([sp.diff(coord, parameters[1]) for coord in parametrization])
+    steps["1"] = [X_u, X_v]
 
     # Step 2 - Compute the normal vector using cross product
     normal_vector = X_u.cross(X_v)
+    steps["2"] = [normal_vector]
 
     # Step 3 - Normalize the normal vector to get the unit normal vector
     magnitude = normal_vector.norm()
@@ -607,11 +611,13 @@ def compute_unit_normal_vector(parametrization, parameters):
     magnitude_no_abs = magnitude.replace(sp.Abs, lambda x: x)
 
     unit_normal = normal_vector / magnitude_no_abs
+    steps["3"] = [unit_normal, magnitude_no_abs]
 
     # Step 4 - Simplify
     unit_normal = sp.simplify(unit_normal)
+    steps["4"] = [unit_normal]
 
-    return unit_normal
+    return unit_normal, steps
 
 
 def compute_arc_length(parametrization, parameter, bounds):
@@ -630,18 +636,20 @@ def compute_arc_length(parametrization, parameter, bounds):
         The arc length ds
     """
     parametrization = sp.Matrix(parametrization)
+    steps = {}
 
     # Step 1 - Compute the derivative of the parametrization
     X_t = sp.Matrix([parametrization.diff(parameter)])
+    steps["1"] = [X_t]
 
-    # Step 2 - Compute the magnitude of the derivative
+    # Step 2 - Compute the magnitude of the derivative and simplify
     magnitude = X_t.norm()
 
-    # Step 3 - Simplify
     magnitude = sp.simplify(magnitude)
     magnitude = magnitude.replace(sp.Abs, lambda x: x)
+    steps["2"] = [magnitude]
 
-    # Step 4 - Integrate to get the arc length
+    # Step 3 - Integrate to get the arc length
     arc_length_integral = sp.Integral(magnitude, (parameter, bounds[0], bounds[1]))
 
     try:  # In case the integral is too hard
@@ -653,10 +661,13 @@ def compute_arc_length(parametrization, parameter, bounds):
         }
         return dict
 
-    # Step 5 - Simplify again
-    arc_length = sp.simplify(arc_length)
+    steps["3"] = [arc_length_integral, arc_length]
 
-    return arc_length
+    # Step 4 - Simplify
+    arc_length = sp.simplify(arc_length)
+    steps["4"] = [arc_length]
+
+    return arc_length, steps
 
 
 def compute_arc_length_reparametrization(parametrization, parameter, bounds):
@@ -674,27 +685,33 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
     sp expression
         The arc length element ds.
     """
+    steps = {}
+
     # Step 1 - Get arc length
-    arc_length = compute_arc_length(parametrization, parameter, bounds)
+    arc_length, _ = compute_arc_length(parametrization, parameter, bounds)
 
     if isinstance(arc_length, dict):
         return arc_length  # Return the dict with message if integral failed
+    steps["1"] = [arc_length]
 
     # Step 2 - Solve for t in terms of s
     s_dummy = sp.Dummy("s", real=True)
     equation = sp.Eq(arc_length, s_dummy)
 
     t_in_terms_of_s = sp.solve(equation, parameter)[0]
+    steps["2"] = [t_in_terms_of_s]
 
     # Step 3 - Substitute t back into the parametrization
     reparametrized_curve = [
         coord.subs(parameter, t_in_terms_of_s) for coord in parametrization
     ]
+    steps["3"] = [reparametrized_curve]
 
     # Step 4 - Simplify
     reparametrized_curve = [sp.simplify(coord) for coord in reparametrized_curve]
+    steps["4"] = [reparametrized_curve]
 
-    return reparametrized_curve
+    return reparametrized_curve, steps
 
 
 def compute_first_fundamental_form(parametrization, parameters):
@@ -711,25 +728,30 @@ def compute_first_fundamental_form(parametrization, parameters):
         Matrix
         The first fundamental form matrix.
     """
+    steps = {}
 
     # Step 1 - Compute the partial derivatives
     X_u = Matrix([sp.diff(coord, parameters[0]) for coord in parametrization])
     X_v = Matrix([sp.diff(coord, parameters[1]) for coord in parametrization])
+    steps["1"] = [X_u, X_v]
 
     # Step 2 - Compute the coefficients of the first fundamental form using dot product
     E = X_u.dot(X_u)
     F = X_u.dot(X_v)
     G = X_v.dot(X_v)
+    steps["2"] = [E, F, G]
 
     # Step 3 - Simplify
     E = sp.simplify(E)
     F = sp.simplify(F)
     G = sp.simplify(G)
+    steps["3"] = [E, F, G]
 
     # Step 4 - Construct the first fundamental form matrix
     first_fundamental_form_matrix = Matrix([[E, F], [F, G]])
+    steps["4"] = [first_fundamental_form_matrix]
 
-    return first_fundamental_form_matrix
+    return first_fundamental_form_matrix, steps
 
 
 def compute_surface_area(parametrization, parameters, u_bounds, v_bounds):
@@ -749,11 +771,13 @@ def compute_surface_area(parametrization, parameters, u_bounds, v_bounds):
     sp expression
         The surface area element dA.
     """
+    steps = {}
 
     # Step 1 - Compute the first fundamental form matrix
-    first_fundamental_form_matrix = compute_first_fundamental_form(
+    first_fundamental_form_matrix, _ = compute_first_fundamental_form(
         parametrization, parameters
     )
+    steps["1"] = [first_fundamental_form_matrix]
 
     E = first_fundamental_form_matrix[0, 0]
     F = first_fundamental_form_matrix[0, 1]
@@ -764,6 +788,7 @@ def compute_surface_area(parametrization, parameters, u_bounds, v_bounds):
         sp.sqrt(E * G - F**2), Q.positive(E) & Q.positive(G) & Q.positive(E * G - F**2)
     )
     integrand_no_abs = integrand.replace(sp.Abs, lambda x: x)
+    steps["2"] = [integrand_no_abs]
 
     # Step 3 - Compute the surface area
     surface_area_integral = sp.Integral(
@@ -782,7 +807,10 @@ def compute_surface_area(parametrization, parameters, u_bounds, v_bounds):
         }
         return dict
 
-    return surface_area
+    surface_area = sp.simplify(surface_area)
+    steps["3"] = [surface_area_integral, surface_area]
+
+    return surface_area, steps
 
 
 def compute_frenet_serret_apparatus(parametrization, parameter):
@@ -806,15 +834,18 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
           "tau": torsion
         }
     """
+    steps = {}
 
     # Step 1 - First derivative (velocity) and simplify
     X_t = Matrix([sp.diff(coord, parameter) for coord in parametrization])
     X_t = sp.simplify(X_t)
+    steps["1"] = [X_t]
 
     # Step 2 - Unit tangent vector T
     X_t_norm = sp.sqrt(X_t.dot(X_t))
     T = X_t / X_t_norm
     T = sp.simplify(T)
+    steps["2"] = [T]
 
     # Step 3 - Second derivative (acceleration)
     X_tt = Matrix([sp.diff(coord, parameter) for coord in X_t])
@@ -823,25 +854,31 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
     if all(sp.simplify(coord) == 0 for coord in X_tt):
         raise ValueError("Frenet-Serret apparatus undefined for straight lines.")
 
+    steps["3"] = [X_tt]
+
     # Step 4 - Curvature kappa
     kappa = (X_t.cross(X_tt)).norm() / (X_t_norm**3)
     kappa = sp.simplify(kappa)
+    steps["4"] = [kappa]
 
     # Step 5 - Normal vector N
     T_t = Matrix([sp.diff(comp, parameter) for comp in T])
     T_t_norm = sp.sqrt(T_t.dot(T_t))
     N = sp.simplify(T_t / T_t_norm)
+    steps["5"] = [N]
 
     # Step 6 - Binormal B
     B = sp.simplify(T.cross(N))
+    steps["6"] = [B]
 
     # Step 7 - Torsion tau
     X_ttt = Matrix([sp.diff(coord, parameter) for coord in X_tt])
     tau = (X_t.cross(X_tt)).dot(X_ttt) / (X_t.cross(X_tt)).norm() ** 2
     tau = sp.simplify(tau)
+    steps["7"] = [tau]
 
     frenet_serret_dict = {"T": T, "N": N, "B": B, "kappa": kappa, "tau": tau}
-    return frenet_serret_dict
+    return frenet_serret_dict, steps
 
 
 def compute_second_fundamental_form(parametrization, parameters):
@@ -858,6 +895,7 @@ def compute_second_fundamental_form(parametrization, parameters):
     Matrix
         The second fundamental form matrix.
     """
+    steps = {}
 
     # Step 1 - Compute the partial derivatives
     X_u = Matrix([sp.diff(coord, parameters[0]) for coord in parametrization])
@@ -865,24 +903,28 @@ def compute_second_fundamental_form(parametrization, parameters):
     X_uu = Matrix([sp.diff(coord, parameters[0]) for coord in X_u])
     X_uv = Matrix([sp.diff(coord, parameters[1]) for coord in X_u])
     X_vv = Matrix([sp.diff(coord, parameters[1]) for coord in X_v])
+    steps["1"] = [X_u, X_v, X_uu, X_uv, X_vv]
 
     # Step 2 - Compute the unit normal vector
-    N = compute_unit_normal_vector(parametrization, parameters)
+    N, _ = compute_unit_normal_vector(parametrization, parameters)
+    steps["2"] = [N]
 
     # Step 3 - Compute the coefficients of the second fundamental form using dot product
     L = N.dot(X_uu)
     M = N.dot(X_uv)
     N_coeff = N.dot(X_vv)
 
-    # Step 4 - Simplify
     L = sp.simplify(L)
     M = sp.simplify(M)
     N_coeff = sp.simplify(N_coeff)
 
-    # Step 5 - Construct the second fundamental form matrix
-    second_fundamental_form_matrix = Matrix([[L, M], [M, N_coeff]])
+    steps["3"] = [L, M, N_coeff]
 
-    return second_fundamental_form_matrix
+    # Step 4 - Construct the second fundamental form matrix
+    second_fundamental_form_matrix = Matrix([[L, M], [M, N_coeff]])
+    steps["4"] = [second_fundamental_form_matrix]
+
+    return second_fundamental_form_matrix, steps
 
 
 def compute_shape_operator(parametrization, parameters):
@@ -899,29 +941,34 @@ def compute_shape_operator(parametrization, parameters):
     Matrix
         The shape operator matrix.
     """
+    steps = {}
+
     # Step 1 - Compute the first fundamental form matrix
-    first_fundamental_form_matrix = compute_first_fundamental_form(
+    first_fundamental_form_matrix, _ = compute_first_fundamental_form(
         parametrization, parameters
     )
+    steps["1"] = [first_fundamental_form_matrix]
 
     # Step 2 - Compute the second fundamental form matrix
-    second_fundamental_form_matrix = compute_second_fundamental_form(
+    second_fundamental_form_matrix, _ = compute_second_fundamental_form(
         parametrization, parameters
     )
+    steps["2"] = [second_fundamental_form_matrix]
 
     # Step 3 - Compute the inverse of the first fundamental form matrix
     if first_fundamental_form_matrix.det() == 0:
         raise ValueError("Shape operator undefined for degenerate parametrization.")
     I_inv = first_fundamental_form_matrix.inv()
     I_inv = sp.simplify(I_inv)
+    steps["3"] = [I_inv]
 
-    # Step 4 - Compute the shape operator as the product of I_inv and II
+    # Step 4 - Compute the shape operator as the product of I_inv and II and simplify
     shape_operator_matrix = I_inv * second_fundamental_form_matrix
-
-    # Step 5 - Simplify
     shape_operator_matrix = sp.simplify(shape_operator_matrix)
 
-    return shape_operator_matrix
+    steps["4"] = [shape_operator_matrix]
+
+    return shape_operator_matrix, steps
 
 
 def compute_mean_curvature(parametrization, parameters):
@@ -938,16 +985,19 @@ def compute_mean_curvature(parametrization, parameters):
     sp expression
         The mean curvature H.
     """
+    steps = {}
+
     # Step 1 - Compute the shape operator matrix
-    shape_operator_matrix = compute_shape_operator(parametrization, parameters)
+    shape_operator_matrix, _ = compute_shape_operator(parametrization, parameters)
+    steps["1"] = [shape_operator_matrix]
 
-    # Step 2 - Compute mean curvature as half the trace of the shape operator
+    # Step 2 - Compute mean curvature as half the trace of the shape operator and simplify
     H = (shape_operator_matrix[0, 0] + shape_operator_matrix[1, 1]) / 2
-
-    # Step 3 - Simplify
     H = sp.simplify(H)
 
-    return H
+    steps["2"] = [H]
+
+    return H, steps
 
 
 def compute_gaussian_curvature(parametrization, parameters):
@@ -964,16 +1014,18 @@ def compute_gaussian_curvature(parametrization, parameters):
     sp expression
         The Gaussian curvature K.
     """
+    steps = {}
+
     # Step 1 - Compute the shape operator matrix
-    shape_operator_matrix = compute_shape_operator(parametrization, parameters)
+    shape_operator_matrix, _ = compute_shape_operator(parametrization, parameters)
+    steps["1"] = [shape_operator_matrix]
 
-    # Step 2 - Compute Gaussian curvature using determinant of shape operator
+    # Step 2 - Compute Gaussian curvature using determinant of shape operator and simplify
     K = shape_operator_matrix.det()
-
-    # Step 3 - Simplify
     K = sp.simplify(K)
+    steps["2"] = [K]
 
-    return K
+    return K, steps
 
 
 def compute_christoffel_symbols(parametrization, parameters):
@@ -990,14 +1042,16 @@ def compute_christoffel_symbols(parametrization, parameters):
     dict
         A dictionary with keys as tuples (i, j, k) representing the Christoffel symbols Γ^k_ij.
     """
+    steps = {}
 
     # Step 1 - Compute the first fundamental form matrix
-    first_fundamental_form_matrix = compute_first_fundamental_form(
+    first_fundamental_form_matrix, _ = compute_first_fundamental_form(
         parametrization, parameters
     )
     E = first_fundamental_form_matrix[0, 0]
     F = first_fundamental_form_matrix[0, 1]
     G = first_fundamental_form_matrix[1, 1]
+    steps["1"] = [first_fundamental_form_matrix]
 
     # Step 2 - Compute partial derivatives
     E_u = sp.diff(E, parameters[0])
@@ -1006,6 +1060,7 @@ def compute_christoffel_symbols(parametrization, parameters):
     F_v = sp.diff(F, parameters[1])
     G_u = sp.diff(G, parameters[0])
     G_v = sp.diff(G, parameters[1])
+    steps["2"] = [E_u, E_v, F_u, F_v, G_u, G_v]
 
     # Step 3 - Compute the inverse of the first fundamental form matrix and multipliers for each pair of Christoffel symbols
     I_inv = first_fundamental_form_matrix.inv()
@@ -1016,7 +1071,14 @@ def compute_christoffel_symbols(parametrization, parameters):
     gamma_sub_uv_multiplier = Matrix([[half * E_v], [half * G_u]])
     gamma_sub_vv_multiplier = Matrix([[F_v - half * G_u], [half * G_v]])
 
-    # Step 4 - Compute the Christoffel symbols with matrix multiplication
+    steps["3"] = [
+        I_inv,
+        gamma_sub_uu_multiplier,
+        gamma_sub_uv_multiplier,
+        gamma_sub_vv_multiplier,
+    ]
+
+    # Step 4 - Compute the Christoffel symbols with matrix multiplication and simplify
     gamma_u_sub_uu = I_inv.row(0) * gamma_sub_uu_multiplier
     gamma_v_sub_uu = I_inv.row(1) * gamma_sub_uu_multiplier
     gamma_u_sub_uv = I_inv.row(0) * gamma_sub_uv_multiplier
@@ -1033,11 +1095,12 @@ def compute_christoffel_symbols(parametrization, parameters):
         "gamma_v_sub_vv": gamma_v_sub_vv,
     }
 
-    # Step 5 - Simplify
     for key, expr in gamma.items():
         gamma[key] = sp.simplify(expr[0])
 
-    return gamma
+    steps["4"] = gamma
+
+    return gamma, steps
 
 
 def compute_codazzi_equations(parametrization, parameters):
@@ -1054,16 +1117,20 @@ def compute_codazzi_equations(parametrization, parameters):
     tuple
         A tuple containing the two Codazzi equations.
     """
+    steps = {}
+
     # Step 1 - Compute the second fundamental form matrix
-    second_fundamental_form_matrix = compute_second_fundamental_form(
+    second_fundamental_form_matrix, _ = compute_second_fundamental_form(
         parametrization, parameters
     )
     L = second_fundamental_form_matrix[0, 0]
     M = second_fundamental_form_matrix[0, 1]
     N_coeff = second_fundamental_form_matrix[1, 1]
 
+    steps["1"] = [second_fundamental_form_matrix]
+
     # Step 2 - Compute the Christoffel symbols
-    christoffel_symbols = compute_christoffel_symbols(parametrization, parameters)
+    christoffel_symbols, _ = compute_christoffel_symbols(parametrization, parameters)
     gamma_u_sub_uu = dict(christoffel_symbols)["gamma_u_sub_uu"]
     gamma_v_sub_uu = dict(christoffel_symbols)["gamma_v_sub_uu"]
     gamma_u_sub_uv = dict(christoffel_symbols)["gamma_u_sub_uv"]
@@ -1071,7 +1138,9 @@ def compute_codazzi_equations(parametrization, parameters):
     gamma_u_sub_vv = dict(christoffel_symbols)["gamma_u_sub_vv"]
     gamma_v_sub_vv = dict(christoffel_symbols)["gamma_v_sub_vv"]
 
-    # Step 3 - Compute the Codazzi equations
+    steps["2"] = christoffel_symbols
+
+    # Step 3 - Compute the Codazzi equations and simplify
     first_codazzi_eq_rhs = (
         L * gamma_u_sub_uv
         + M * gamma_v_sub_uv
@@ -1085,11 +1154,12 @@ def compute_codazzi_equations(parametrization, parameters):
         - N_coeff * gamma_v_sub_uv
     )
 
-    # Step 4 - Simplify
     first_codazzi_eq_rhs = sp.simplify(first_codazzi_eq_rhs)
     second_codazzi_eq_rhs = sp.simplify(second_codazzi_eq_rhs)
 
-    # Step 5 - Verify
+    steps["3"] = [first_codazzi_eq_rhs, second_codazzi_eq_rhs]
+
+    # Step 4 - Verify
     L_v = sp.diff(L, parameters[1])
     M_u = sp.diff(M, parameters[0])
     M_v = sp.diff(M, parameters[1])
@@ -1098,11 +1168,14 @@ def compute_codazzi_equations(parametrization, parameters):
     first_codazzi_eq_lhs = sp.simplify(L_v - M_u)
     second_codazzi_eq_lhs = sp.simplify(M_v - N_u)
 
+    steps["4"] = [first_codazzi_eq_lhs, second_codazzi_eq_lhs, L_v, M_u, M_v, N_u]
+
     return (
         first_codazzi_eq_rhs,
         second_codazzi_eq_rhs,
         first_codazzi_eq_lhs,
         second_codazzi_eq_lhs,
+        steps,
     )
 
 
@@ -1182,30 +1255,38 @@ def compute_gauss_equations(parametrization, parameters):
     tuple
         A tuple containing the four Gauss equations.
     """
+    steps = {}
+
     # Step 1 - Compute the first fundamental form matrix
-    first_fundamental_form_matrix = compute_first_fundamental_form(
+    first_fundamental_form_matrix, _ = compute_first_fundamental_form(
         parametrization, parameters
     )
     E = first_fundamental_form_matrix[0, 0]
     F = first_fundamental_form_matrix[0, 1]
     G = first_fundamental_form_matrix[1, 1]
 
+    steps["1"] = [first_fundamental_form_matrix]
+
     # Step 2 - Compute the second fundamental form matrix
-    second_fundamental_form_matrix = compute_second_fundamental_form(
+    second_fundamental_form_matrix, _ = compute_second_fundamental_form(
         parametrization, parameters
     )
     L = second_fundamental_form_matrix[0, 0]
     M = second_fundamental_form_matrix[0, 1]
     N = second_fundamental_form_matrix[1, 1]
 
+    steps["2"] = [second_fundamental_form_matrix]
+
     # Step 3 - Compute the Christoffel symbols
-    christoffel_symbols = compute_christoffel_symbols(parametrization, parameters)
+    christoffel_symbols, _ = compute_christoffel_symbols(parametrization, parameters)
     gamma_u_sub_uu = dict(christoffel_symbols)["gamma_u_sub_uu"]
     gamma_v_sub_uu = dict(christoffel_symbols)["gamma_v_sub_uu"]
     gamma_u_sub_uv = dict(christoffel_symbols)["gamma_u_sub_uv"]
     gamma_v_sub_uv = dict(christoffel_symbols)["gamma_v_sub_uv"]
     gamma_u_sub_vv = dict(christoffel_symbols)["gamma_u_sub_vv"]
     gamma_v_sub_vv = dict(christoffel_symbols)["gamma_v_sub_vv"]
+
+    steps["3"] = christoffel_symbols
 
     # Step 4 - Compute partial derivatives of Christoffel symbols
     gamma_u_sub_uv_u = sp.diff(gamma_u_sub_uv, parameters[0])
@@ -1217,7 +1298,18 @@ def compute_gauss_equations(parametrization, parameters):
     gamma_v_sub_vv_u = sp.diff(gamma_v_sub_vv, parameters[0])
     gamma_v_sub_uv_v = sp.diff(gamma_v_sub_uv, parameters[1])
 
-    # Step 5 - Compute the Gauss equations
+    steps["4"] = [
+        gamma_u_sub_uv_u,
+        gamma_u_sub_uu_v,
+        gamma_v_sub_uv_u,
+        gamma_v_sub_uu_v,
+        gamma_u_sub_vv_u,
+        gamma_u_sub_uv_v,
+        gamma_v_sub_vv_u,
+        gamma_v_sub_uv_v,
+    ]
+
+    # Step 5 - Compute the Gauss equations and simplify
     first_gauss_eq = (
         gamma_v_sub_uu_v
         - gamma_v_sub_uv_u
@@ -1249,12 +1341,19 @@ def compute_gauss_equations(parametrization, parameters):
         - gamma_v_sub_uv * gamma_u_sub_vv
     )
 
-    # Step 6 - Simplify
-
     first_gauss_eq_rhs = sp.simplify(first_gauss_eq)
     second_gauss_eq_rhs = sp.simplify(second_gauss_eq)
     third_gauss_eq_rhs = sp.simplify(third_gauss_eq)
     fourth_gauss_eq_rhs = sp.simplify(fourth_gauss_eq)
+
+    steps["5"] = [
+        first_gauss_eq_rhs,
+        second_gauss_eq_rhs,
+        third_gauss_eq_rhs,
+        fourth_gauss_eq_rhs,
+    ]
+
+    # Step 6 - Compute Gaussian curvature K and verify
 
     K_numerator = L * N - M**2
     K_denominator = E * G - F**2
@@ -1265,6 +1364,14 @@ def compute_gauss_equations(parametrization, parameters):
     third_gauss_eq_lhs = sp.simplify(F * K)
     fourth_gauss_eq_lhs = sp.simplify(G * K)
 
+    steps["6"] = [
+        K,
+        first_gauss_eq_lhs,
+        second_gauss_eq_lhs,
+        third_gauss_eq_lhs,
+        fourth_gauss_eq_lhs,
+    ]
+
     return (
         first_gauss_eq_rhs,
         second_gauss_eq_rhs,
@@ -1274,4 +1381,5 @@ def compute_gauss_equations(parametrization, parameters):
         second_gauss_eq_lhs,
         third_gauss_eq_lhs,
         fourth_gauss_eq_lhs,
+        steps,
     )

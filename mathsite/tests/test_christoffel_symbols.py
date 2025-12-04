@@ -59,7 +59,7 @@ def test_christoffel_plane_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, 0]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     expected = {key: 0 for key in gamma}
     assert_christoffel_symbols_equal(gamma, expected)
 
@@ -69,7 +69,7 @@ def test_christoffel_plane_symbolic():
     a, b, c, d = sp.symbols("a b c d", real=True)
     X = [a * u + b * v, c * u + d * v, 0]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     expected = {key: 0 for key in gamma}
     assert_christoffel_symbols_equal(gamma, expected)
 
@@ -83,7 +83,7 @@ def test_christoffel_cylinder_numeric():
     R = 2.7
     X = [R * sp.cos(u), R * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     # Compute E,F,G
     E = R**2
     F = 0
@@ -97,7 +97,7 @@ def test_christoffel_cylinder_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [a * sp.cos(u), a * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     E = a**2
     F = 0
     G = b**2
@@ -114,7 +114,7 @@ def test_christoffel_sphere_numeric():
     R = 1.8
     X = [R * sp.sin(u) * sp.cos(v), R * sp.sin(u) * sp.sin(v), R * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     E = R**2
     F = 0
     G = R**2 * sp.sin(u) ** 2
@@ -127,7 +127,7 @@ def test_christoffel_sphere_symbolic():
     a = sp.symbols("a", positive=True)
     X = [a * sp.sin(u) * sp.cos(v), a * sp.sin(u) * sp.sin(v), a * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     E = a**2
     F = 0
     G = a**2 * sp.sin(u) ** 2
@@ -149,7 +149,7 @@ def test_christoffel_torus_numeric():
         r * sp.sin(v),
     ]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix(
         [-(R + r * sp.cos(v)) * sp.sin(u), (R + r * sp.cos(v)) * sp.cos(u), 0]
     )
@@ -172,7 +172,7 @@ def test_christoffel_torus_symbolic():
         b * sp.sin(v),
     ]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix(
         [-(a + b * sp.cos(v)) * sp.sin(u), (a + b * sp.cos(v)) * sp.cos(u), 0]
     )
@@ -194,7 +194,7 @@ def test_christoffel_paraboloid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, u**2 + v**2]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([1, 0, 2 * u])
     Xv = sp.Matrix([0, 1, 2 * v])
     E = Xu.dot(Xu)
@@ -209,7 +209,7 @@ def test_christoffel_paraboloid_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [u, v, a * u**2 + b * v**2]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([1, 0, 2 * a * u])
     Xv = sp.Matrix([0, 1, 2 * b * v])
     E = Xu.dot(Xu)
@@ -227,7 +227,7 @@ def test_christoffel_hyperbolic_paraboloid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u, v, u**2 - v**2]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([1, 0, 2 * u])
     Xv = sp.Matrix([0, 1, -2 * v])
     E = Xu.dot(Xu)
@@ -242,7 +242,7 @@ def test_christoffel_hyperbolic_paraboloid_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [u, v, a * u**2 - b * v**2]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([1, 0, 2 * a * u])
     Xv = sp.Matrix([0, 1, -2 * b * v])
     E = Xu.dot(Xu)
@@ -260,7 +260,7 @@ def test_christoffel_elliptic_surface_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u + v, u - v, u * v]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([1, 1, v])
     Xv = sp.Matrix([1, -1, u])
     E = Xu.dot(Xu)
@@ -275,7 +275,7 @@ def test_christoffel_elliptic_surface_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [u + v, a * u - b * v, a * b * u * v]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([1, a, a * b * v])
     Xv = sp.Matrix([1, -b, a * b * u])
     E = Xu.dot(Xu)
@@ -293,7 +293,7 @@ def test_christoffel_catenoid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [sp.cosh(v) * sp.cos(u), sp.cosh(v) * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([-sp.cosh(v) * sp.sin(u), sp.cosh(v) * sp.cos(u), 0])
     Xv = sp.Matrix([sp.sinh(v) * sp.cos(u), sp.sinh(v) * sp.sin(u), 1])
     E = Xu.dot(Xu)
@@ -308,7 +308,7 @@ def test_christoffel_catenoid_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [a * sp.cosh(v) * sp.cos(u), a * sp.cosh(v) * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([-a * sp.cosh(v) * sp.sin(u), a * sp.cosh(v) * sp.cos(u), 0])
     Xv = sp.Matrix([a * sp.sinh(v) * sp.cos(u), a * sp.sinh(v) * sp.sin(u), b])
     E = Xu.dot(Xu)
@@ -326,7 +326,7 @@ def test_christoffel_helicoid_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u * sp.cos(v), u * sp.sin(v), v]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([sp.cos(v), sp.sin(v), 0])
     Xv = sp.Matrix([-u * sp.sin(v), u * sp.cos(v), 1])
     E = Xu.dot(Xu)
@@ -341,7 +341,7 @@ def test_christoffel_helicoid_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [a * u * sp.cos(v), a * u * sp.sin(v), b * v]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([a * sp.cos(v), a * sp.sin(v), 0])
     Xv = sp.Matrix([-a * u * sp.sin(v), a * u * sp.cos(v), b])
     E = Xu.dot(Xu)
@@ -359,7 +359,7 @@ def test_christoffel_weird_surface_numeric():
     u, v = sp.symbols("u v", real=True)
     X = [u**2 * v, u * v**2, sp.exp(u + v)]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([2 * u * v, v**2, sp.exp(u + v)])
     Xv = sp.Matrix([u**2, 2 * u * v, sp.exp(u + v)])
     E = Xu.dot(Xu)
@@ -374,7 +374,7 @@ def test_christoffel_weird_surface_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [a * u**2 * v, b * u * v**2, sp.exp(a * u + b * v)]
     X = parse_input(str(X), str([u, v]))
-    gamma = compute_christoffel_symbols(X, [u, v])
+    gamma, _ = compute_christoffel_symbols(X, [u, v])
     Xu = sp.Matrix([2 * a * u * v, b * v**2, a * sp.exp(a * u + b * v)])
     Xv = sp.Matrix([a * u**2, 2 * b * u * v, b * sp.exp(a * u + b * v)])
     E = Xu.dot(Xu)

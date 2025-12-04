@@ -35,7 +35,7 @@ def test_plane_numeric():
     X = [u, v, 0]
     X = parse_input(str(X), str([u, v]))
 
-    SA = compute_surface_area(X, [u, v], [0, 1], [0, 1])
+    SA, _ = compute_surface_area(X, [u, v], [0, 1], [0, 1])
     expected = sp.Integer(1)
     assert_expr_equal(SA, expected)
 
@@ -54,7 +54,7 @@ def test_plane_symbolic():
     integrand = sp.sqrt(E * G - F**2)
 
     expected = sp.integrate(integrand, (u, u1, u2), (v, v1, v2))
-    SA = compute_surface_area(X, [u, v], [u1, u2], [v1, v2])
+    SA, _ = compute_surface_area(X, [u, v], [u1, u2], [v1, v2])
     assert_expr_equal(SA, expected)
 
 
@@ -71,7 +71,7 @@ def test_cylinder_numeric():
     X = [R * sp.cos(u), R * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
 
-    SA = compute_surface_area(X, [u, v], [0, 2 * sp.pi], [0, h])
+    SA, _ = compute_surface_area(X, [u, v], [0, 2 * sp.pi], [0, h])
     expected = 2 * sp.pi * R * h
     assert_expr_equal(SA, expected)
 
@@ -85,7 +85,7 @@ def test_cylinder_symbolic():
     M = compute_first_fundamental_form(X, [u, v])
     integrand = sp.sqrt(M[0, 0] * M[1, 1] - M[0, 1] ** 2)
     expected = sp.integrate(integrand, (u, u1, u2), (v, v1, v2))
-    SA = compute_surface_area(X, [u, v], [u1, u2], [v1, v2])
+    SA, _ = compute_surface_area(X, [u, v], [u1, u2], [v1, v2])
     assert_expr_equal(SA, expected)
 
 
@@ -101,7 +101,7 @@ def test_sphere_numeric():
     X = [R * sp.sin(u) * sp.cos(v), R * sp.sin(u) * sp.sin(v), R * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
 
-    SA = compute_surface_area(X, [u, v], [0, sp.pi], [0, 2 * sp.pi])
+    SA, _ = compute_surface_area(X, [u, v], [0, sp.pi], [0, 2 * sp.pi])
     expected = 4 * sp.pi * R**2
 
     assert_expr_equal(SA, expected)
@@ -112,7 +112,7 @@ def test_sphere_symbolic():
     a = sp.symbols("a", real=True, positive=True)
     X = [a * sp.sin(u) * sp.cos(v), a * sp.sin(u) * sp.sin(v), a * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
-    SA = compute_surface_area(X, [u, v], [0, sp.pi], [0, 2 * sp.pi])
+    SA, _ = compute_surface_area(X, [u, v], [0, sp.pi], [0, 2 * sp.pi])
 
     expected = 4 * sp.pi * a**2
 
@@ -136,7 +136,7 @@ def test_torus_numeric():
     ]
     X = parse_input(str(X), str([u, v]))
 
-    SA = compute_surface_area(X, [u, v], [0, 2 * sp.pi], [0, 2 * sp.pi])
+    SA, _ = compute_surface_area(X, [u, v], [0, 2 * sp.pi], [0, 2 * sp.pi])
     expected = 4 * sp.pi**2 * R * r
     assert_expr_equal(SA, expected)
 
@@ -152,6 +152,6 @@ def test_torus_symbolic():
     X = parse_input(str(X), str([u, v]))
 
     expected = b * (u2 - u1) * (a * (v2 - v1) + b * (sp.sin(v2) - sp.sin(v1)))
-    SA = compute_surface_area(X, [u, v], [u1, u2], [v1, v2])
+    SA, _ = compute_surface_area(X, [u, v], [u1, u2], [v1, v2])
 
     assert_expr_equal(SA, expected)
