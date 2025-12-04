@@ -692,13 +692,14 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
 
     if isinstance(arc_length, dict):
         return arc_length  # Return the dict with message if integral failed
+
     steps["1"] = [arc_length]
 
     # Step 2 - Solve for t in terms of s
     s_dummy = sp.Dummy("s", real=True)
     equation = sp.Eq(arc_length, s_dummy)
-
     t_in_terms_of_s = sp.solve(equation, parameter)[0]
+
     steps["2"] = [t_in_terms_of_s]
 
     # Step 3 - Substitute t back into the parametrization
@@ -735,21 +736,20 @@ def compute_first_fundamental_form(parametrization, parameters):
     X_v = Matrix([sp.diff(coord, parameters[1]) for coord in parametrization])
     steps["1"] = [X_u, X_v]
 
-    # Step 2 - Compute the coefficients of the first fundamental form using dot product
+    # Step 2 - Compute the coefficients of the first fundamental form using dot product and simplify
     E = X_u.dot(X_u)
     F = X_u.dot(X_v)
     G = X_v.dot(X_v)
-    steps["2"] = [E, F, G]
 
-    # Step 3 - Simplify
     E = sp.simplify(E)
     F = sp.simplify(F)
     G = sp.simplify(G)
-    steps["3"] = [E, F, G]
 
-    # Step 4 - Construct the first fundamental form matrix
+    steps["2"] = [E, F, G]
+
+    # Step 3 - Construct the first fundamental form matrix
     first_fundamental_form_matrix = Matrix([[E, F], [F, G]])
-    steps["4"] = [first_fundamental_form_matrix]
+    steps["3"] = [first_fundamental_form_matrix]
 
     return first_fundamental_form_matrix, steps
 
@@ -1201,8 +1201,6 @@ def compute_numeric_frenet_serret(t, R):
             "arc_length": array of arc length values
         }
     """
-    import numpy as np
-
     n = len(t)
     curvature = np.full(n, None)
     torsion = np.full(n, None)
@@ -1353,7 +1351,7 @@ def compute_gauss_equations(parametrization, parameters):
         fourth_gauss_eq_rhs,
     ]
 
-    # Step 6 - Compute Gaussian curvature K and verify
+    # Step 6 - Compute Gaussian curvature K to verify
 
     K_numerator = L * N - M**2
     K_denominator = E * G - F**2
