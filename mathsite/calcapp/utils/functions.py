@@ -847,7 +847,7 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
     # Step 3 - Find second derivative (acceleration)
     X_tt = Matrix([sp.diff(coord, parameter) for coord in X_t])
     X_tt = sp.simplify(X_tt)
-
+    
     if all(sp.simplify(coord) == 0 for coord in X_tt):
         raise ValueError("Frenet-Serret apparatus undefined for straight lines.")
 

@@ -35,16 +35,23 @@ def compute(request):
             if not isinstance(params, dict):
                 params = {}
 
+            parameter = params.get("var", "t")
+            parameter = sp.Symbol(parameter, real=True)
             t0_str = data.get("t0", "0")
             t1_str = data.get("t1", "2*pi")
-            try:
-                t0 = functions.parse_range_value(t0_str, 0.0)
-                t1 = functions.parse_range_value(t1_str, 2 * 3.141592653589793)
-            except Exception as e:
-                return JsonResponse(
-                    {"ok": False, "error": f"Error parsing parameter range: {str(e)}"},
-                    status=400,
-                )
+            bounds = [t0_str, t1_str]
+            bounds = parser.parse_bounds(bounds, str([parameter]))
+            param_dict = params.get("exprs")
+            param_list = []
+            param_list.append(
+                parser.parse_input(str(param_dict.get("x")), str([parameter]))
+            )
+            param_list.append(
+                parser.parse_input(str(param_dict.get("y")), str([parameter]))
+            )
+            param_list.append(
+                parser.parse_input(str(param_dict.get("z")), str([parameter]))
+            )
 
             try:
                 n = int(data.get("n", 400))
@@ -55,160 +62,29 @@ def compute(request):
             except (ValueError, TypeError):
                 n = 400
 
+            fr = functions.compute_frenet_serret_apparatus(param_list, parameter)
+            t, R = functions.numeric_curve_positions(
+                curve, params, float(bounds[0]), float(bounds[1]), n
+            )
+            frenet_data = functions.compute_numeric_frenet_serret(t, R)
             symbolic_quantity = data.get("symbolic_quantity", "")
-
-            try:
-                t, R = functions.numeric_curve_positions(curve, params, t0, t1, n)
-            except Exception as e:
-                error_msg = (
-                    str(e)
-                    if str(e)
-                    else f"Error computing curve positions: {type(e).__name__}"
-                )
-                return JsonResponse({"ok": False, "error": error_msg}, status=400)
-
-            try:
-                frenet_data = functions.compute_numeric_frenet_serret(t, R)
-            except Exception as e:
-                error_msg = (
-                    str(e)
-                    if str(e)
-                    else f"Error computing Frenet-Serret data: {type(e).__name__}"
-                )
-                return JsonResponse({"ok": False, "error": error_msg}, status=400)
 
             symbolic = {}
 
             if symbolic_quantity:
-                try:
-                    t_sym = sp.symbols("t", real=True)
-                except Exception as e:
-                    symbolic["symbolic_error"] = f"Error creating symbol: {str(e)}"
-                    symbolic_quantity = ""
-
-                if symbolic_quantity:
-                    try:
-                        r_matrix = functions.symbolic_formula_for(curve, params)
-
-                    except Exception as e:
-                        symbolic["symbolic_error"] = (
-                            f"Error getting symbolic formula: {str(e)}"
-                        )
-                        symbolic_quantity = ""
-
-                original_symbols = set()
-                if isinstance(r_matrix, sp.Matrix):
-                    for expr in r_matrix:
-                        if hasattr(expr, "free_symbols"):
-                            original_symbols.update(expr.free_symbols)
-                else:
-                    for expr in list(sp.Matrix(r_matrix)):
-                        if hasattr(expr, "free_symbols"):
-                            original_symbols.update(expr.free_symbols)
-
-                t_symbol_in_expr = None
-                for sym in original_symbols:
-                    if str(sym) == "t":
-                        t_symbol_in_expr = sym
-                        break
-                if t_symbol_in_expr:
-                    original_symbols.discard(t_symbol_in_expr)
-
-                subs_dict_original = {}
-                for key, value in params.items():
-                    if key != "exprs" and key != "var":
-                        try:
-                            param_value = float(value)
-
-                            matching_symbol = None
-                            for sym in original_symbols:
-                                if str(sym) == key:
-                                    matching_symbol = sym
-                                    break
-
-                            if matching_symbol:
-                                subs_dict_original[matching_symbol] = param_value
-                        except (ValueError, TypeError):
-                            pass
-
-                if isinstance(r_matrix, sp.Matrix):
-                    param_list = list(r_matrix)
-                else:
-                    param_list = list(sp.Matrix(r_matrix))
-
-                if subs_dict_original:
-                    for i in range(len(param_list)):
-                        param_list[i] = param_list[i].subs(subs_dict_original)
-
-                        for key, value in params.items():
-                            if key != "exprs" and key != "var":
-                                try:
-                                    param_value = float(value)
-
-                                    for sym in param_list[i].free_symbols:
-                                        if str(sym) == key:
-                                            param_list[i] = param_list[i].xreplace(
-                                                {sym: param_value}
-                                            )
-                                except (ValueError, TypeError, AttributeError):
-                                    pass
-
-                        param_list[i] = sp.simplify(param_list[i])
-
-                try:
-                    for i in range(len(param_list)):
-                        try:
-                            param_list[i] = parser.parse_input(
-                                str(param_list[i]), [t_sym]
-                            )
-                        except Exception as parse_err:
-                            symbolic["parse_error"] = (
-                                f"Error parsing expression {i + 1}: {str(parse_err)}"
-                            )
-                            symbolic_quantity = ""  # Skip symbolic computation
-                            break
-                except Exception as e:
-                    symbolic["parse_error"] = f"Error during parsing: {str(e)}"
-                    symbolic_quantity = ""  # Skip symbolic computation
-
-                all_symbols_after = set()
-                for expr in param_list:
-                    if hasattr(expr, "free_symbols"):
-                        all_symbols_after.update(expr.free_symbols)
-                all_symbols_after.discard(t_sym)
-
-                subs_dict_after = {}
-                for key, value in params.items():
-                    if key != "exprs" and key != "var":
-                        try:
-                            param_value = float(value)
-
-                            for sym in all_symbols_after:
-                                if str(sym) == key:
-                                    subs_dict_after[sym] = param_value
-                        except (ValueError, TypeError):
-                            pass
-
-                if subs_dict_after:
-                    for i in range(len(param_list)):
-                        param_list[i] = param_list[i].subs(subs_dict_after)
-                        param_list[i] = sp.simplify(param_list[i])
-
-                bounds = [t0, t1]
-
                 if symbolic_quantity == "arc_length":
                     try:
                         # Add computation steps
                         try:
                             steps = functions.get_computation_steps(
-                                "arc_length", param_list, [t_sym]
+                                "arc_length", param_list, [parameter]
                             )
                             symbolic["computation_steps"] = steps
                         except Exception:
                             pass
-
-                        s_expr = functions.compute_arc_length(param_list, t_sym, bounds)
-                        print(s_expr)
+                        s_expr = functions.compute_arc_length(
+                            param_list, parameter, bounds
+                        )
                         if isinstance(s_expr, dict):
                             symbolic["arc_length_error"] = s_expr.get(
                                 "msg", "No elementary antiderivative found."
@@ -239,13 +115,13 @@ def compute(request):
                         # Add computation steps
                         try:
                             steps = functions.get_computation_steps(
-                                "reparam_arc_length", param_list, [t_sym]
+                                "reparam_arc_length", param_list, [parameter]
                             )
                             symbolic["computation_steps"] = steps
                         except Exception:
                             pass
                         rep = functions.compute_arc_length_reparametrization(
-                            param_list, t_sym, bounds
+                            param_list, parameter, bounds
                         )
                         if isinstance(rep, dict):
                             error_msg = rep.get("msg", "Reparametrization failed.")
@@ -318,16 +194,16 @@ def compute(request):
                         # Add computation steps
                         try:
                             steps = functions.get_computation_steps(
-                                "frenet", param_list, [t_sym]
+                                "frenet", param_list, [parameter]
                             )
                             symbolic["computation_steps"] = steps
                         except Exception:
                             pass
                         fr = functions.compute_frenet_serret_apparatus(
-                            param_list, t_sym
+                            param_list, parameter
                         )
 
-                        for k, v in fr.items():
+                        for k, v in fr[0].items():
                             try:
                                 symbolic[k] = sp.latex(v)
                             except Exception as latex_err:
@@ -388,6 +264,30 @@ def compute(request):
             if not isinstance(params, dict):
                 params = {}
 
+            parameters = [params.get("u"), params.get("v")]
+            parameters[0] = sp.Symbol(parameters[0], real=True)
+            parameters[1] = sp.Symbol(parameters[1], real=True)
+
+            u0_str = params.get("u0", "0")
+            u1_str = params.get("u1", "2*pi")
+            v0_str = params.get("v0", "0")
+            v1_str = params.get("v1", "2*pi")
+            bounds_u = [u0_str, u1_str]
+            bounds_v = [v0_str, v1_str]
+            bounds_u = parser.parse_bounds(bounds_u, str([parameters]))
+            bounds_v = parser.parse_bounds(bounds_v, str([parameters]))
+
+            param_list = []
+            param_list.append(
+                parser.parse_input(str(params.get("x")), str([parameters]))
+            )
+            param_list.append(
+                parser.parse_input(str(params.get("y")), str([parameters]))
+            )
+            param_list.append(
+                parser.parse_input(str(params.get("z")), str([parameters]))
+            )
+
             compute_symbolic_flag = bool(data.get("compute_symbolic", False))
             symbolic_quantity = data.get("symbolic_quantity", "")
 
@@ -408,11 +308,6 @@ def compute(request):
                     nv = 200
             except (ValueError, TypeError):
                 nv = 60
-
-            u0_str = params.get("u0", "0")
-            u1_str = params.get("u1", "2*pi")
-            v0_str = params.get("v0", "0")
-            v1_str = params.get("v1", "2*pi")
 
             try:
                 u0 = functions.parse_range_value(u0_str, 0.0)
@@ -478,12 +373,6 @@ def compute(request):
             symbolic = {}
 
             if compute_symbolic_flag and symbolic_quantity:
-                try:
-                    u_sym, v_sym = sp.symbols(f"{var_u} {var_v}", real=True)
-                except Exception as e:
-                    symbolic["symbolic_error"] = f"Error creating symbols: {str(e)}"
-                    compute_symbolic_flag = False
-
                 if compute_symbolic_flag:
                     try:
                         param_list = [
@@ -498,8 +387,6 @@ def compute(request):
                         compute_symbolic_flag = False
 
                     if compute_symbolic_flag:
-                        parameters = (u_sym, v_sym)
-
                         try:
                             for i in range(len(param_list)):
                                 try:
@@ -529,10 +416,10 @@ def compute(request):
 
                         I = functions.compute_first_fundamental_form(
                             param_list, parameters
-                        )
-                        E = I[0][0, 0]
-                        F = I[0][0, 1]
-                        G = I[0][1, 1]
+                        )[0]
+                        E = I[0, 0]
+                        F = I[0, 1]
+                        G = I[1, 1]
                         try:
                             symbolic["E"] = sp.latex(E)
                             symbolic["F"] = sp.latex(F)
@@ -565,10 +452,10 @@ def compute(request):
 
                         II = functions.compute_second_fundamental_form(
                             param_list, parameters
-                        )
-                        L = II[0][0, 0]
-                        M = II[0][0, 1]
-                        N = II[0][1, 1]
+                        )[0]
+                        L = II[0, 0]
+                        M = II[0, 1]
+                        N = II[1, 1]
                         try:
                             symbolic["L"] = sp.latex(L)
                             symbolic["M"] = sp.latex(M)
