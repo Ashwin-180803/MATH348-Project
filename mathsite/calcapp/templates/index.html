@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{% static 'styles.css' %}">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-  <!-- MathJax configuration -->
+  
   <script>
     window.MathJax = {
       tex: {
@@ -28,13 +28,13 @@
     <h1>Curves & Surfaces — Interactive Calculator</h1>
 
     <div class="controls">
-      <!-- MAIN TABS: Curves / Surfaces -->
+      
       <div class="tabs main-tabs">
         <button class="tab active" data-mode-tab="curve">Curves</button>
         <button class="tab" data-mode-tab="surface">Surfaces</button>
       </div>
 
-      <!-- SUBTABS FOR CURVES (quantities for curves) -->
+      
       <div id="curve-quantity-tabs" class="tabs sub-tabs">
         <button class="tab active" data-quantity-tab="">
           Numeric only
@@ -50,7 +50,7 @@
         </button>
       </div>
 
-      <!-- SUBTABS FOR SURFACES (quantities for surfaces) -->
+      
       <div id="surface-quantity-tabs" class="tabs sub-tabs" style="display:none;">
         <button class="tab active" data-quantity-tab="">
           Numeric only
@@ -81,7 +81,7 @@
         </button>
       </div>
 
-      <!-- HIDDEN original selectors (used internally by script.js) -->
+      
       <label class="hidden-control">
         Mode:
         <select id="mode">
@@ -118,7 +118,6 @@
       <div id="curve-section">
         <div class="curve-row">
           <label>Curve:</label>
-
           <select id="curve" class="curve-select">
             <option value="helix">Helix</option>
             <option value="circle">Circle</option>
@@ -131,18 +130,18 @@
             <option value="tractrix">Tractrix</option>
             <option value="custom_curve">Custom curve</option>
           </select>
+        </div>
 
-          <!-- Parametrization UI (inline) -->
-          <div id="param-display" class="param-display">
-            <span>X(</span>
-            <input class="var-input" id="var1" type="text">
-            <span>) =</span>
-            <input class="coord-input" id="coord1" type="text">
-            <span>,</span>
-            <input class="coord-input" id="coord2" type="text">
-            <span>,</span>
-            <input class="coord-input" id="coord3" type="text">
-          </div>
+        <!-- Parametrization UI (on its own line) -->
+        <div id="param-display" class="param-display">
+          <span>X(</span>
+          <input class="var-input" id="var1" type="text">
+          <span>) =</span>
+          <input class="coord-input" id="coord1" type="text">
+          <span>,</span>
+          <input class="coord-input" id="coord2" type="text">
+          <span>,</span>
+          <input class="coord-input" id="coord3" type="text">
         </div>
 
 
@@ -151,11 +150,11 @@
         <!-- t-range: one line, endpoints inline -->
         <div class="param-row">
           <label>t-range:</label>
-          <input id="t0" type="number" step="any" value="0"> to
-          <input id="t1" type="number" step="any" value="6.28318530718">
+          <input id="t0" type="text" value="0"> to
+          <input id="t1" type="text" value="2*pi">
         </div>
 
-        <!-- Points -->
+        
         <div class="param-row">
           <label>Points:</label>
           <input id="n" type="number" value="400">
@@ -166,7 +165,6 @@
       <div id="surface-section" style="display:none;">
         <div class="surface-row">
           <label>Surface:</label>
-
           <select id="surface" class="curve-select">
             <option value="plane">Plane</option>
             <option value="cylinder">Cylinder</option>
@@ -181,22 +179,21 @@
             <option value="klein">Klein bottle</option>
             <option value="enneper">Enneper surface</option>
             <option value="custom_surface">Custom surface</option>
-
           </select>
+        </div>
 
-          <!-- Parametrization UI for surfaces -->
-          <div id="surface-param-display" class="param-display">
-            <span>X(</span>
-            <input class="var-input" id="us" type="text">
-            <span>,</span>
-            <input class="var-input" id="vs" type="text">
-            <span>) =</span>
-            <input class="coord-input" id="usx" type="text">
-            <span>,</span>
-            <input class="coord-input" id="usy" type="text">
-            <span>,</span>
-            <input class="coord-input" id="usz" type="text">
-          </div>
+        <!-- Parametrization UI for surfaces (on its own line) -->
+        <div id="surface-param-display" class="param-display">
+          <span>X(</span>
+          <input class="var-input" id="us" type="text">
+          <span>,</span>
+          <input class="var-input" id="vs" type="text">
+          <span>) =</span>
+          <input class="coord-input" id="usx" type="text" placeholder="X(u,v)">
+          <span>,</span>
+          <input class="coord-input" id="usy" type="text" placeholder="Y(u,v)">
+          <span>,</span>
+          <input class="coord-input" id="usz" type="text" placeholder="Z(u,v)">
         </div>
 
         <div id="surface-params"></div>
@@ -204,15 +201,15 @@
         <!-- u-range: one line -->
         <div class="param-row">
           <label>u-range:</label>
-          <input id="u0" type="number" step="any" value="0"> to
-          <input id="u1" type="number" step="any" value="6.28318530718">
+          <input id="u0" type="text" value="0"> to
+          <input id="u1" type="text" value="2*pi">
         </div>
 
         <!-- v-range: next line -->
         <div class="param-row">
           <label>v-range:</label>
-          <input id="v0" type="number" step="any" value="0"> to
-          <input id="v1" type="number" step="any" value="6.28318530718">
+          <input id="v0" type="text" value="0"> to
+          <input id="v1" type="text" value="2*pi">
         </div>
 
         <!-- Resolution: next line -->
@@ -222,7 +219,7 @@
           <input id="nv" type="number" value="60">
         </div>
 
-        <!-- Symbolic toggle -->
+        
         <label class="param-row" style="align-items:center; gap:0.5rem;">
           <input id="compute_symbolic" type="checkbox">
           <span>Symbolic forms (for surfaces)</span>

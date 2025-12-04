@@ -61,7 +61,7 @@ def build_local_dict(parameters):
 
     local = {}
 
-    # Symbols
+    
     for name in english_letters + greek_letters:
         if name in variables:
             local[name] = Symbol(name, real=True)
