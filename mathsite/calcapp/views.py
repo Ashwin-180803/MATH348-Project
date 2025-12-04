@@ -448,7 +448,7 @@ def compute(request):
 
             try:
                 U, V, X, Y, Z = functions.mesh_from_parametric_surfaces(
-                    exprs_num, (u0, u1), (v0, v1), nu, nv, var_u, var_v, params
+                    exprs_num, (u0, u1), (v0, v1), nu, nv, var_u, var_v
                 )
                 print(
                     f"DEBUG: Mesh generated, X.shape: {X.shape}, Y.shape: {Y.shape}, Z.shape: {Z.shape}"
