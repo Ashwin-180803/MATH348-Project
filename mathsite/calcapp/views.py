@@ -35,6 +35,7 @@ def compute(request):
             
             t0_str = data.get("t0", "0")
             t1_str = data.get("t1", "2*pi")
+<<<<<<< HEAD
             try:
                 t0 = functions.parse_range_value(t0_str, 0.0)
                 t1 = functions.parse_range_value(t1_str, 2 * 3.141592653589793)
@@ -63,10 +64,22 @@ def compute(request):
             except Exception as e:
                 error_msg = str(e) if str(e) else f"Error computing Frenet-Serret data: {type(e).__name__}"
                 return JsonResponse({"ok": False, "error": error_msg}, status=400)
+=======
+
+            t0 = functions.parse_range_value(t0_str, 0.0)
+            t1 = functions.parse_range_value(t1_str, 2 * 3.141592653589793)
+            n = int(data.get("n", 400))
+
+            symbolic_quantity = data.get("symbolic_quantity", "")
+            var_provided = [params.get("var", "").strip()]
+            t, R = functions.numeric_curve_positions(curve, params, t0, t1, n)
+            frenet_data = functions.compute_numeric_frenet_serret(t, R)
+>>>>>>> origin
 
             symbolic = {}
 
             if symbolic_quantity:
+<<<<<<< HEAD
                 try:
                     t_sym = sp.symbols("t", real=True)
                 except Exception as e:
@@ -121,6 +134,19 @@ def compute(request):
                 
                 if isinstance(r_matrix, sp.Matrix):
                     param_list = list(r_matrix)
+=======
+                t_sym = sp.symbols("t", real=True)
+                r_matrix = functions.symbolic_formula_for(curve, params)
+                bounds = {t_sym: (t0, t1)}
+                if isinstance(r_matrix, sp.Matrix):
+                    param_list = list(r_matrix)
+
+                    for i in range(len(param_list)):
+                        param_list[i] = parser.parse_input(
+                            str(param_list[i]), str(var_provided)
+                        )
+
+>>>>>>> origin
                 else:
                     param_list = list(sp.Matrix(r_matrix))
                 
@@ -145,6 +171,7 @@ def compute(request):
                         
                         param_list[i] = sp.simplify(param_list[i])
 
+<<<<<<< HEAD
                     
                 
                 try:
@@ -187,6 +214,8 @@ def compute(request):
 
                 bounds = [t0, t1]
 
+=======
+>>>>>>> origin
                 if symbolic_quantity == "arc_length":
                     try:
                         # Add computation steps
@@ -303,6 +332,7 @@ def compute(request):
                         error_msg = str(e) if str(e) else f"{type(e).__name__}"
                         symbolic["frenet_error"] = f"Error computing Frenet-Serret apparatus: {error_msg}"
 
+<<<<<<< HEAD
             
             
             try:
@@ -312,6 +342,65 @@ def compute(request):
                     "variable_param": '["t"]',
                     "parametrization": '["", "", ""]',
                     "trange": f'["{t0_str}", "{t1_str}"]'
+=======
+            exprs = params.get("exprs", {})
+            var_provided = params.get("var", "").strip()
+            x_provided = exprs.get("x", "").strip() if exprs.get("x") else ""
+            y_provided = exprs.get("y", "").strip() if exprs.get("y") else ""
+            z_provided = exprs.get("z", "").strip() if exprs.get("z") else ""
+
+            default_exprs = functions.get_default_curve_expressions(curve, params)
+
+            has_custom_input = (
+                (var_provided and var_provided != "t")
+                or (x_provided and x_provided != "0")
+                or (y_provided and y_provided != "0")
+                or (z_provided and z_provided != "0")
+            )
+
+            if not has_custom_input:
+                variable_param = "t"
+                x_expr = default_exprs["x"]
+                y_expr = default_exprs["y"]
+                z_expr = default_exprs["z"]
+            else:
+                variable_param = var_provided if var_provided else "t"
+                x_expr = (
+                    x_provided
+                    if x_provided and x_provided != "0"
+                    else default_exprs["x"]
+                )
+                y_expr = (
+                    y_provided
+                    if y_provided and y_provided != "0"
+                    else default_exprs["y"]
+                )
+                z_expr = (
+                    z_provided
+                    if z_provided and z_provided != "0"
+                    else default_exprs["z"]
+                )
+
+            variable_param_str = f'["{variable_param}"]'
+            parametrization_str = f'["{x_expr}", "{y_expr}", "{z_expr}"]'
+            trange_str = f'["{t0_str}", "{t1_str}"]'
+
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "mode": "curve",
+                    "t": t.tolist(),
+                    "x": R[:, 0].tolist(),
+                    "y": R[:, 1].tolist(),
+                    "z": R[:, 2].tolist(),
+                    "curvature": frenet_data["curvature"],
+                    "torsion": frenet_data["torsion"],
+                    "arc_length": frenet_data["arc_length"],
+                    "symbolic": symbolic,
+                    "variable_param": variable_param_str,
+                    "parametrization": parametrization_str,
+                    "trange": trange_str,
+>>>>>>> origin
                 }
             
             try:
@@ -390,6 +479,7 @@ def compute(request):
                 var_u = "u"
                 var_v = "v"
 
+<<<<<<< HEAD
             try:
                 exprs_num = functions.get_surface_expressions(surface, params)
             except Exception as e:
@@ -406,8 +496,20 @@ def compute(request):
                 error_msg = f"Error generating surface mesh: {str(mesh_error)}"
                 print(f"DEBUG: {error_msg}")
                 return JsonResponse({"ok": False, "error": error_msg}, status=400)
+=======
+            exprs_num = functions.get_surface_expressions(surface, params)
+            print(
+                f"DEBUG: Surface {surface}, variables: u='{var_u}', v='{var_v}', expressions: {exprs_num}"
+            )
 
-            
+            U, V, X, Y, Z = functions.mesh_from_parametric_surfaces(
+                exprs_num, (u0, u1), (v0, v1), nu, nv, var_u, var_v
+            )
+            print(
+                f"DEBUG: Mesh generated, X.shape: {X.shape}, Y.shape: {Y.shape}, Z.shape: {Z.shape}"
+            )
+>>>>>>> origin
+
             if X.size == 0 or Y.size == 0 or Z.size == 0:
                 error_msg = f"Generated mesh is empty: X.size={X.size}, Y.size={Y.size}, Z.size={Z.size}"
                 print(f"DEBUG: {error_msg}")
@@ -432,6 +534,7 @@ def compute(request):
             symbolic = {}
 
             if compute_symbolic_flag and symbolic_quantity:
+<<<<<<< HEAD
                 try:
                     u_sym, v_sym = sp.symbols(f"{var_u} {var_v}", real=True)
                 except Exception as e:
@@ -463,6 +566,22 @@ def compute(request):
                         except Exception as e:
                             symbolic["parse_error"] = f"Error during parsing: {str(e)}"
                             compute_symbolic_flag = False
+=======
+                u_sym, v_sym = sp.symbols(f"{var_u} {var_v}", real=True)
+
+                param_list = [
+                    sp.sympify(exprs_num["x"]),
+                    sp.sympify(exprs_num["y"]),
+                    sp.sympify(exprs_num["z"]),
+                ]
+
+                parameters = [u_sym, v_sym]
+
+                for i in range(len(param_list)):
+                    param_list[i] = parser.parse_input(
+                        str(param_list[i]), str(parameters)
+                    )
+>>>>>>> origin
 
                 if symbolic_quantity == "first_form":
                     try:
@@ -642,6 +761,7 @@ def compute(request):
                         error_msg = str(e) if str(e) else f"{type(e).__name__}"
                         symbolic["codazzi_eq_error"] = f"Error computing Codazzi equations: {error_msg}"
 
+<<<<<<< HEAD
             
             
             try:
@@ -654,6 +774,57 @@ def compute(request):
                     "parametrization": '["", "", ""]',
                     "urange": f'["{u0_str}", "{u1_str}"]',
                     "vrange": f'["{v0_str}", "{v1_str}"]'
+=======
+            default_surface_exprs = functions.get_default_surface_expressions(
+                surface, params
+            )
+
+            u_provided = params.get("u", "").strip()
+            v_provided = params.get("v", "").strip()
+            x_provided = params.get("x", "").strip()
+            y_provided = params.get("y", "").strip()
+            z_provided = params.get("z", "").strip()
+
+            has_custom_input = (
+                (u_provided and u_provided != "u")
+                or (v_provided and v_provided != "v")
+                or (x_provided and x_provided != "0")
+                or (y_provided and y_provided != "0")
+                or (z_provided and z_provided != "0")
+            )
+
+            if not has_custom_input:
+                return_var_u = "u"
+                return_var_v = "v"
+
+                x_expr = default_surface_exprs["x"]
+                y_expr = default_surface_exprs["y"]
+                z_expr = default_surface_exprs["z"]
+            else:
+                return_var_u = var_u
+                return_var_v = var_v
+                x_expr = exprs_num.get("x", default_surface_exprs["x"])
+                y_expr = exprs_num.get("y", default_surface_exprs["y"])
+                z_expr = exprs_num.get("z", default_surface_exprs["z"])
+
+            parameters_str = f'["{return_var_u}", "{return_var_v}"]'
+            parametrization_str = f'["{x_expr}", "{y_expr}", "{z_expr}"]'
+            urange_str = f'["{u0_str}", "{u1_str}"]'
+            vrange_str = f'["{v0_str}", "{v1_str}"]'
+
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "mode": "surface",
+                    "X": X.tolist(),
+                    "Y": Y.tolist(),
+                    "Z": Z.tolist(),
+                    "symbolic": symbolic,
+                    "variable_param": parameters_str,
+                    "parametrization": parametrization_str,
+                    "urange": urange_str,
+                    "vrange": vrange_str,
+>>>>>>> origin
                 }
             
             try:

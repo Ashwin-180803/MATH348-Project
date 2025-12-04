@@ -39,27 +39,30 @@ def substitute_constants_in_expr(expr, params, parameters):
 
 
 def parse_range_value(expr_str, default=0.0):
-    
     if not expr_str or not isinstance(expr_str, str):
         return float(default)
-    
+
     expr_str = expr_str.strip()
     if not expr_str:
         return float(default)
-    
+
     try:
-        
         return float(expr_str)
     except ValueError:
-        
         try:
+<<<<<<< HEAD
             expr = parser.parse_input(expr_str, [])
             
+=======
+            expr = sp.sympify(expr_str)
+
+>>>>>>> origin
             result = float(expr.evalf())
             return result
         except (ValueError, TypeError, AttributeError) as e:
-            
-            print(f"Warning: Could not parse range expression '{expr_str}', using default {default}: {e}")
+            print(
+                f"Warning: Could not parse range expression '{expr_str}', using default {default}: {e}"
+            )
             return float(default)
 
 
@@ -74,64 +77,69 @@ def get_default_curve_expressions(curve, params):
             "y": "sin(t)",
             "z": "0.2*t",
         }
-    
+
     if curve == "circle":
         return {
             "x": "cos(t)",
             "y": "sin(t)",
             "z": "0",
         }
-    
+
     if curve == "ellipse":
         return {
             "x": "2*cos(t)",
             "y": "sin(t)",
             "z": "0",
         }
-    
+
     if curve == "line":
         return {
             "x": "x0 + t*(x1-x0)",
             "y": "y0 + t*(y1-y0)",
             "z": "z0 + t*(z1-z0)",
         }
-    
+
     if curve == "cycloid":
         return {
             "x": "t - sin(t)",
             "y": "1 - cos(t)",
             "z": "0",
         }
-    
+
     if curve == "twisted_cubic":
         return {
             "x": "t",
             "y": "t^2",
             "z": "t^3",
         }
-    
+
     if curve == "catenary":
         return {
             "x": "t",
             "y": "cosh(t/2)",
             "z": "0",
         }
-    
+
     if curve == "hyperbola":
         return {
             "x": "cosh(t)",
             "y": "sinh(t)",
             "z": "0",
         }
-    
+
     if curve == "tractrix":
         return {
             "x": "t - tanh(t)",
             "y": "sech(t)",
             "z": "0",
         }
+<<<<<<< HEAD
     
     
+=======
+
+    # Default fallback for custom_curve or unknown
+>>>>>>> origin
     return {
         "x": "0",
         "y": "0",
@@ -142,16 +150,14 @@ def get_default_curve_expressions(curve, params):
 def numeric_curve_positions(curve_name, params, t0, t1, n):
     t = np.linspace(t0, t1, n)
 
-    
     exprs = params.get("exprs", {})
     x_expr_str = str(exprs.get("x", "")).strip() if exprs.get("x") else ""
     y_expr_str = str(exprs.get("y", "")).strip() if exprs.get("y") else ""
     if exprs and x_expr_str and y_expr_str:
-        
         t_sym = sp.symbols("t")
         try:
-        
             z_expr_str = str(exprs.get("z", "0")).strip() if exprs.get("z") else "0"
+<<<<<<< HEAD
             x_expr = parser.parse_input(x_expr_str, [t_sym]) if x_expr_str else parser.parse_input("0", [t_sym])
             y_expr = parser.parse_input(y_expr_str, [t_sym]) if y_expr_str else parser.parse_input("0", [t_sym])
             z_expr = parser.parse_input(z_expr_str, [t_sym]) if z_expr_str else parser.parse_input("0", [t_sym])
@@ -160,46 +166,88 @@ def numeric_curve_positions(curve_name, params, t0, t1, n):
             y_expr = substitute_constants_in_expr(y_expr, params, [t_sym])
             z_expr = substitute_constants_in_expr(z_expr, params, [t_sym])
             
+=======
+            x_expr = sp.sympify(x_expr_str) if x_expr_str else sp.sympify("0")
+            y_expr = sp.sympify(y_expr_str) if y_expr_str else sp.sympify("0")
+            z_expr = sp.sympify(z_expr_str) if z_expr_str else sp.sympify("0")
+
+            subs_dict = {}
+            for key, value in params.items():
+                if key != "exprs":
+                    try:
+                        param_value = float(value)
+                        subs_dict[sp.Symbol(key)] = param_value
+                    except (ValueError, TypeError):
+                        pass
+
+            if subs_dict:
+                x_expr = x_expr.subs(subs_dict)
+                y_expr = y_expr.subs(subs_dict)
+                z_expr = z_expr.subs(subs_dict)
+
+>>>>>>> origin
             fx = sp.lambdify(t_sym, x_expr, "numpy")
             fy = sp.lambdify(t_sym, y_expr, "numpy")
             fz = sp.lambdify(t_sym, z_expr, "numpy")
-            
-            
+
             X_raw = fx(t)
             Y_raw = fy(t)
             Z_raw = fz(t)
-            
-            
+
             X = np.asarray(X_raw, dtype=float).flatten()
             Y = np.asarray(Y_raw, dtype=float).flatten()
             Z = np.asarray(Z_raw, dtype=float).flatten()
-            
-            
+
             expected_len = len(t)
-            
-            
+
             if X.ndim == 0 or len(X) == 1:
                 X = np.full(expected_len, float(X.flat[0]))
             else:
-                X = X[:expected_len] if len(X) >= expected_len else np.pad(X, (0, expected_len - len(X)), mode='constant', constant_values=0)
-                
+                X = (
+                    X[:expected_len]
+                    if len(X) >= expected_len
+                    else np.pad(
+                        X,
+                        (0, expected_len - len(X)),
+                        mode="constant",
+                        constant_values=0,
+                    )
+                )
+
             if Y.ndim == 0 or len(Y) == 1:
                 Y = np.full(expected_len, float(Y.flat[0]))
             else:
-                Y = Y[:expected_len] if len(Y) >= expected_len else np.pad(Y, (0, expected_len - len(Y)), mode='constant', constant_values=0)
-                
+                Y = (
+                    Y[:expected_len]
+                    if len(Y) >= expected_len
+                    else np.pad(
+                        Y,
+                        (0, expected_len - len(Y)),
+                        mode="constant",
+                        constant_values=0,
+                    )
+                )
+
             if Z.ndim == 0 or len(Z) == 1:
                 Z = np.full(expected_len, float(Z.flat[0]))
             else:
-                Z = Z[:expected_len] if len(Z) >= expected_len else np.pad(Z, (0, expected_len - len(Z)), mode='constant', constant_values=0)
-            
-            
+                Z = (
+                    Z[:expected_len]
+                    if len(Z) >= expected_len
+                    else np.pad(
+                        Z,
+                        (0, expected_len - len(Z)),
+                        mode="constant",
+                        constant_values=0,
+                    )
+                )
+
             min_len = min(len(X), len(Y), len(Z), len(t))
             X = X[:min_len]
             Y = Y[:min_len]
             Z = Z[:min_len]
             t = t[:min_len]
-            
+
             R = np.column_stack((X, Y, Z))
             return t, R
         except Exception as e:
@@ -398,8 +446,10 @@ def get_default_surface_expressions(surface, params):
 def substitute_curve_params_in_expr(expr_str, params, curve):
     
     import re
+
     if not expr_str:
         return expr_str
+<<<<<<< HEAD
     
     substitutions = {}
     
@@ -486,20 +536,36 @@ def substitute_params_in_expr(expr_str, params, surface):
             r_val = 0.4
         
         if re.search(r'\bR\b', expr_str):
+=======
+
+    substitutions = {}
+
+    if surface == "torus":
+        R_val = float(params.get("R", 1.0))
+        r_val = float(params.get("r", 0.4))
+
+        if re.search(r"\bR\b", expr_str):
+>>>>>>> origin
             substitutions["R"] = str(R_val)
-        if re.search(r'\br\b', expr_str):
+        if re.search(r"\br\b", expr_str):
             substitutions["r"] = str(r_val)
     
     elif surface == "sphere":
+<<<<<<< HEAD
         r_str = params.get("r", "").strip()
         try:
             r_val = float(r_str) if r_str else 1.0
         except (ValueError, TypeError):
             r_val = 1.0
         if re.search(r'\br\b', expr_str):
+=======
+        r_val = float(params.get("r", 1.0))
+        if re.search(r"\br\b", expr_str):
+>>>>>>> origin
             substitutions["r"] = str(r_val)
     
     elif surface == "paraboloid":
+<<<<<<< HEAD
         a_str = params.get("a", "").strip()
         try:
             a_val = float(a_str) if a_str else 1.0
@@ -578,31 +644,36 @@ def substitute_params_in_expr(expr_str, params, surface):
         except (ValueError, TypeError):
             a_val = 1.0
         if re.search(r'\ba\b', expr_str):
+=======
+        a_val = float(params.get("a", 1.0))
+        if re.search(r"\ba\b", expr_str):
+>>>>>>> origin
             substitutions["a"] = str(a_val)
-    
-    
+
     result = expr_str
     for param_name, param_value in substitutions.items():
+<<<<<<< HEAD
         pattern = r'\b' + re.escape(param_name) + r'\b'
+=======
+        pattern = r"\b" + re.escape(param_name) + r"\b"
+>>>>>>> origin
         result = re.sub(pattern, param_value, result)
-    
+
     return result
 
 
 def get_surface_expressions(surface, params):
-    
     x_expr = params.get("x", "").strip()
     y_expr = params.get("y", "").strip()
     z_expr = params.get("z", "").strip()
 
-    
     default_exprs = get_default_surface_expressions(surface, params)
 
-    
-    if (x_expr and x_expr != "0" and x_expr != default_exprs["x"]) or \
-       (y_expr and y_expr != "0" and y_expr != default_exprs["y"]) or \
-       (z_expr and z_expr != "0" and z_expr != default_exprs["z"]):
-        
+    if (
+        (x_expr and x_expr != "0" and x_expr != default_exprs["x"])
+        or (y_expr and y_expr != "0" and y_expr != default_exprs["y"])
+        or (z_expr and z_expr != "0" and z_expr != default_exprs["z"])
+    ):
         x_expr = substitute_params_in_expr(x_expr, params, surface)
         y_expr = substitute_params_in_expr(y_expr, params, surface)
         z_expr = substitute_params_in_expr(z_expr, params, surface)
@@ -612,7 +683,6 @@ def get_surface_expressions(surface, params):
             "z": z_expr,
         }
 
-    
     default_exprs_substituted = {
         "x": substitute_params_in_expr(default_exprs["x"], params, surface),
         "y": substitute_params_in_expr(default_exprs["y"], params, surface),
@@ -621,6 +691,7 @@ def get_surface_expressions(surface, params):
     return default_exprs_substituted
 
 
+<<<<<<< HEAD
 def mesh_from_parametric_surfaces(exprs, u_range, v_range, nu, nv, var_u="u", var_v="v", params=None):
     """
     Generate mesh from parametric surface expressions.
@@ -635,12 +706,18 @@ def mesh_from_parametric_surfaces(exprs, u_range, v_range, nu, nv, var_u="u", va
         var_v: Variable name for v parameter (default "v")
         params: Optional dictionary of parameters for constant substitution (e.g., {"R": "1.0", "r": "0.4"})
     """
+=======
+def mesh_from_parametric_surfaces(
+    exprs, u_range, v_range, nu, nv, var_u="u", var_v="v"
+):
+>>>>>>> origin
     u = np.linspace(u_range[0], u_range[1], nu)
     v = np.linspace(v_range[0], v_range[1], nv)
     U, V = np.meshgrid(u, v, indexing="xy")
 
     usym, vsym = sp.symbols(var_u + " " + var_v)
     try:
+<<<<<<< HEAD
         print(f"DEBUG: Evaluating expressions with variables {var_u}, {var_v}: x='{exprs['x']}', y='{exprs['y']}', z='{exprs['z']}'")
         
         x_sympy = parser.parse_input(exprs["x"], [usym, vsym])
@@ -695,6 +772,21 @@ def mesh_from_parametric_surfaces(exprs, u_range, v_range, nu, nv, var_u="u", va
         
         if X.size == 0 or Y.size == 0 or Z.size == 0:
             raise ValueError(f"Generated arrays are empty: X.size={X.size}, Y.size={Y.size}, Z.size={Z.size}")
+=======
+        print(
+            f"DEBUG: Evaluating expressions with variables {var_u}, {var_v}: x='{exprs['x']}', y='{exprs['y']}', z='{exprs['z']}'"
+        )
+        fx = sp.lambdify((usym, vsym), sp.sympify(exprs["x"]), "numpy")
+        fy = sp.lambdify((usym, vsym), sp.sympify(exprs["y"]), "numpy")
+        fz = sp.lambdify((usym, vsym), sp.sympify(exprs["z"]), "numpy")
+
+        X = np.array(fx(U, V), dtype=float)
+        Y = np.array(fy(U, V), dtype=float)
+        Z = np.array(fz(U, V), dtype=float)
+        print(
+            f"DEBUG: Arrays created: X.shape={X.shape}, Y.shape={Y.shape}, Z.shape={Z.shape}"
+        )
+>>>>>>> origin
 
     except Exception as e:
         print(f"DEBUG: Error in mesh generation: {e}")
@@ -706,10 +798,13 @@ def mesh_from_parametric_surfaces(exprs, u_range, v_range, nu, nv, var_u="u", va
 
 
 def symbolic_formula_for(curve, params):
+<<<<<<< HEAD
     """
     Get symbolic formula for a curve, with parameter values substituted.
     Returns SymPy Matrix with numeric values substituted for parameters.
     """
+=======
+>>>>>>> origin
     t = sp.symbols("t")
 
     if curve == "line":
@@ -758,34 +853,6 @@ def symbolic_formula_for(curve, params):
         raise ValueError(f"Unknown curve type: {curve}")
 
     return expr
-
-
-def find_constants(parametrization, parameters):
-    """
-    Identify constants in a given parametrization
-    """
-    if not isinstance(parameters, list):
-        parameters = [parameters]
-
-    
-    param_set = set(parameters)
-
-    quantity_set = set()
-    symbol_set = set()
-    constants = []
-    for expr in parametrization:
-        if not isinstance(expr, Expr):
-            continue  
-
-        quantity_set |= expr.atoms(Quantity)
-        symbol_set |= expr.free_symbols
-
-    for symbol in symbol_set:
-        if str(symbol) not in [str(q) for q in param_set]:
-            constant = sp.Symbol(str(symbol), real=True, positive=True)
-            constants.append(constant)
-
-    return constants
 
 
 def trig_simplify_all(expr):
@@ -1708,8 +1775,8 @@ def compute_numeric_frenet_serret(t, R):
 
     # Compute arc length
     for i in range(1, n):
-        dist = np.linalg.norm(R[i] - R[i-1])
-        arc_length[i] = arc_length[i-1] + dist
+        dist = np.linalg.norm(R[i] - R[i - 1])
+        arc_length[i] = arc_length[i - 1] + dist
 
     # Compute derivatives numerically using finite differences
     dt = np.gradient(t)
@@ -1729,16 +1796,13 @@ def compute_numeric_frenet_serret(t, R):
     # Second derivatives (acceleration)
     dT_dt = np.gradient(T, t, axis=0)
 
-    
     curvature_magnitude = np.linalg.norm(dT_dt, axis=1)
     curvature = curvature_magnitude / speed
-
-    
 
     return {
         "curvature": curvature.tolist(),
         "torsion": torsion.tolist(),
-        "arc_length": arc_length.tolist()
+        "arc_length": arc_length.tolist(),
     }
 
 
