@@ -316,9 +316,9 @@ def get_default_surface_expressions(surface, params):
 
     if surface == "sphere":
         return {
-            "x": "cos(u) * sin(v)",
+            "x": "cos(v) * sin(u)",
             "y": "sin(u) * sin(v)",
-            "z": "cos(v)",
+            "z": "cos(u)",
         }
 
     if surface == "torus":
@@ -684,6 +684,7 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
         The arc length element ds.
     """
     steps = {}
+    bounds[1] = parameter
 
     # Step 1 - Compute arc length
     arc_length, _ = compute_arc_length(parametrization, parameter, bounds)
@@ -694,6 +695,7 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
     steps["1"] = [arc_length]
 
     # Step 2 - Solve for t in terms of s
+
     s_dummy = sp.Dummy("s", real=True)
     equation = sp.Eq(arc_length, s_dummy)
     t_in_terms_of_s = sp.solve(equation, parameter)[0]

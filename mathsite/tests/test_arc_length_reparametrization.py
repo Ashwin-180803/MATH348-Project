@@ -143,7 +143,7 @@ def test_helix_symbolic():
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     L = sp.sqrt(a**2 + b**2)
-    expected = [a * sp.cos(s / L - 2), a * sp.sin(s / L - 2), b * (s / L - 2)]
+    expected = [a * sp.cos((s / L) - 2), a * sp.sin((s / L) - 2), b * ((s / L) - 2)]
 
     assert_arc_lengths_equal(result, expected)
 

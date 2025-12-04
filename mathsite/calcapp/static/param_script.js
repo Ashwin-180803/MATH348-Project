@@ -58,9 +58,9 @@ const surfaceDefaults = {
     sphere: {
         u: "u",
         v: "v",
-        x: "cos(u) * sin(v)",
+        x: "cos(v) * sin(u)",
         y: "sin(u) * sin(v)",
-        z: "cos(v)"
+        z: "cos(u)"
     },
 
     torus: {

@@ -244,11 +244,9 @@ def compute(request):
                             symbolic["computation_steps"] = steps
                         except Exception:
                             pass
-
                         rep = functions.compute_arc_length_reparametrization(
                             param_list, t_sym, bounds
                         )
-
                         if isinstance(rep, dict):
                             error_msg = rep.get("msg", "Reparametrization failed.")
                             if not error_msg or error_msg.strip() == "":
@@ -325,10 +323,10 @@ def compute(request):
                             symbolic["computation_steps"] = steps
                         except Exception:
                             pass
-
                         fr = functions.compute_frenet_serret_apparatus(
                             param_list, t_sym
                         )
+
                         for k, v in fr.items():
                             try:
                                 symbolic[k] = sp.latex(v)
@@ -532,10 +530,9 @@ def compute(request):
                         I = functions.compute_first_fundamental_form(
                             param_list, parameters
                         )
-
-                        E = I[0, 0]
-                        F = I[0, 1]
-                        G = I[1, 1]
+                        E = I[0][0, 0]
+                        F = I[0][0, 1]
+                        G = I[0][1, 1]
                         try:
                             symbolic["E"] = sp.latex(E)
                             symbolic["F"] = sp.latex(F)
@@ -569,9 +566,9 @@ def compute(request):
                         II = functions.compute_second_fundamental_form(
                             param_list, parameters
                         )
-                        L = II[0, 0]
-                        M = II[0, 1]
-                        N = II[1, 1]
+                        L = II[0][0, 0]
+                        M = II[0][0, 1]
+                        N = II[0][1, 1]
                         try:
                             symbolic["L"] = sp.latex(L)
                             symbolic["M"] = sp.latex(M)
@@ -663,7 +660,7 @@ def compute(request):
 
                         gamma = functions.compute_christoffel_symbols(
                             param_list, parameters
-                        )
+                        )[0]
 
                         for name, expr in gamma.items():
                             try:
