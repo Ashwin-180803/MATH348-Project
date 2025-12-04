@@ -29,15 +29,14 @@ def compute(request):
             params = data.get("params", {})
             t0_str = data.get("t0", "0")
             t1_str = data.get("t1", "2*pi")
+
             t0 = functions.parse_range_value(t0_str, 0.0)
             t1 = functions.parse_range_value(t1_str, 2 * 3.141592653589793)
             n = int(data.get("n", 400))
+
             symbolic_quantity = data.get("symbolic_quantity", "")
-
-            
+            var_provided = [params.get("var", "").strip()]
             t, R = functions.numeric_curve_positions(curve, params, t0, t1, n)
-
-            
             frenet_data = functions.compute_numeric_frenet_serret(t, R)
 
             symbolic = {}
@@ -45,18 +44,17 @@ def compute(request):
             if symbolic_quantity:
                 t_sym = sp.symbols("t", real=True)
                 r_matrix = functions.symbolic_formula_for(curve, params)
+                bounds = {t_sym: (t0, t1)}
                 if isinstance(r_matrix, sp.Matrix):
                     param_list = list(r_matrix)
 
-                    
                     for i in range(len(param_list)):
-                        param_list[i] = parser.parse_input(str(param_list[i]))
+                        param_list[i] = parser.parse_input(
+                            str(param_list[i]), str(var_provided)
+                        )
 
                 else:
-                    
                     param_list = list(sp.Matrix(r_matrix))
-
-                bounds = {t_sym: (t0, t1)}
 
                 if symbolic_quantity == "arc_length":
                     try:
@@ -87,42 +85,48 @@ def compute(request):
                     except Exception as e:
                         symbolic["frenet_error"] = str(e)
 
-            
             exprs = params.get("exprs", {})
             var_provided = params.get("var", "").strip()
             x_provided = exprs.get("x", "").strip() if exprs.get("x") else ""
             y_provided = exprs.get("y", "").strip() if exprs.get("y") else ""
             z_provided = exprs.get("z", "").strip() if exprs.get("z") else ""
-            
-            
+
             default_exprs = functions.get_default_curve_expressions(curve, params)
-            
-            
+
             has_custom_input = (
-                (var_provided and var_provided != "t") or
-                (x_provided and x_provided != "0") or
-                (y_provided and y_provided != "0") or
-                (z_provided and z_provided != "0")
+                (var_provided and var_provided != "t")
+                or (x_provided and x_provided != "0")
+                or (y_provided and y_provided != "0")
+                or (z_provided and z_provided != "0")
             )
-            
+
             if not has_custom_input:
-                
-                variable_param = "t"  
+                variable_param = "t"
                 x_expr = default_exprs["x"]
                 y_expr = default_exprs["y"]
                 z_expr = default_exprs["z"]
             else:
-                
                 variable_param = var_provided if var_provided else "t"
-                x_expr = x_provided if x_provided and x_provided != "0" else default_exprs["x"]
-                y_expr = y_provided if y_provided and y_provided != "0" else default_exprs["y"]
-                z_expr = z_provided if z_provided and z_provided != "0" else default_exprs["z"]
-            
-            
+                x_expr = (
+                    x_provided
+                    if x_provided and x_provided != "0"
+                    else default_exprs["x"]
+                )
+                y_expr = (
+                    y_provided
+                    if y_provided and y_provided != "0"
+                    else default_exprs["y"]
+                )
+                z_expr = (
+                    z_provided
+                    if z_provided and z_provided != "0"
+                    else default_exprs["z"]
+                )
+
             variable_param_str = f'["{variable_param}"]'
             parametrization_str = f'["{x_expr}", "{y_expr}", "{z_expr}"]'
             trange_str = f'["{t0_str}", "{t1_str}"]'
-            
+
             return JsonResponse(
                 {
                     "ok": True,
@@ -167,14 +171,17 @@ def compute(request):
             var_v = params.get("v", "v")
 
             exprs_num = functions.get_surface_expressions(surface, params)
-            print(f"DEBUG: Surface {surface}, variables: u='{var_u}', v='{var_v}', expressions: {exprs_num}")
+            print(
+                f"DEBUG: Surface {surface}, variables: u='{var_u}', v='{var_v}', expressions: {exprs_num}"
+            )
 
             U, V, X, Y, Z = functions.mesh_from_parametric_surfaces(
                 exprs_num, (u0, u1), (v0, v1), nu, nv, var_u, var_v
             )
-            print(f"DEBUG: Mesh generated, X.shape: {X.shape}, Y.shape: {Y.shape}, Z.shape: {Z.shape}")
+            print(
+                f"DEBUG: Mesh generated, X.shape: {X.shape}, Y.shape: {Y.shape}, Z.shape: {Z.shape}"
+            )
 
-            
             if X.size == 0 or Y.size == 0 or Z.size == 0:
                 raise ValueError("Generated mesh is empty")
 
@@ -189,10 +196,12 @@ def compute(request):
                     sp.sympify(exprs_num["z"]),
                 ]
 
-                parameters = (u_sym, v_sym)
-                
+                parameters = [u_sym, v_sym]
+
                 for i in range(len(param_list)):
-                    param_list[i] = parser.parse_input(str(param_list[i]))
+                    param_list[i] = parser.parse_input(
+                        str(param_list[i]), str(parameters)
+                    )
 
                 if symbolic_quantity == "first_form":
                     try:
@@ -283,48 +292,43 @@ def compute(request):
                     except Exception as e:
                         symbolic["codazzi_eq_error"] = str(e)
 
-            
-            
-            default_surface_exprs = functions.get_default_surface_expressions(surface, params)
-            
-            
+            default_surface_exprs = functions.get_default_surface_expressions(
+                surface, params
+            )
+
             u_provided = params.get("u", "").strip()
             v_provided = params.get("v", "").strip()
             x_provided = params.get("x", "").strip()
             y_provided = params.get("y", "").strip()
             z_provided = params.get("z", "").strip()
-            
+
             has_custom_input = (
-                (u_provided and u_provided != "u") or
-                (v_provided and v_provided != "v") or
-                (x_provided and x_provided != "0") or
-                (y_provided and y_provided != "0") or
-                (z_provided and z_provided != "0")
+                (u_provided and u_provided != "u")
+                or (v_provided and v_provided != "v")
+                or (x_provided and x_provided != "0")
+                or (y_provided and y_provided != "0")
+                or (z_provided and z_provided != "0")
             )
-            
-            
+
             if not has_custom_input:
-                
-                return_var_u = "u"  
-                return_var_v = "v"  
-                
+                return_var_u = "u"
+                return_var_v = "v"
+
                 x_expr = default_surface_exprs["x"]
                 y_expr = default_surface_exprs["y"]
                 z_expr = default_surface_exprs["z"]
             else:
-                
                 return_var_u = var_u
                 return_var_v = var_v
                 x_expr = exprs_num.get("x", default_surface_exprs["x"])
                 y_expr = exprs_num.get("y", default_surface_exprs["y"])
                 z_expr = exprs_num.get("z", default_surface_exprs["z"])
-            
-            
+
             parameters_str = f'["{return_var_u}", "{return_var_v}"]'
             parametrization_str = f'["{x_expr}", "{y_expr}", "{z_expr}"]'
             urange_str = f'["{u0_str}", "{u1_str}"]'
             vrange_str = f'["{v0_str}", "{v1_str}"]'
-            
+
             return JsonResponse(
                 {
                     "ok": True,
