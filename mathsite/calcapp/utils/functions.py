@@ -372,8 +372,6 @@ def get_default_surface_expressions(surface, params):
 
 
 def substitute_params_in_expr(expr_str, params, surface):
-    import re
-
     if not expr_str:
         return expr_str
 
