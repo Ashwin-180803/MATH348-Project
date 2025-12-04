@@ -121,14 +121,14 @@ const paramTemplates = {
   ],
   cycloid: [],
   twisted_cubic: [],
-  catenary: [["C", "1.0"]],
+  catenary: [],
   hyperbola: [],
   tractrix: [],
 };
 
 const surfaceTemplates = {
-  sphere: [["r", "1.0"]],
-  torus: [["R", "1.0"], ["r", "0.4"]],
+  sphere: [],
+  torus: [],
   paraboloid: [],
   custom_surface: [],
 };
@@ -465,15 +465,26 @@ if (computeBtn) {
         data = JSON.parse(text);
       } catch (e) {
         console.error("Failed to parse JSON:", text);
-        throw new Error("Server did not return valid JSON.");
+        if (infoDiv) {
+          infoDiv.textContent = "Error: Server did not return valid JSON. Please try again.";
+        }
+        if (computeBtn) {
+          computeBtn.disabled = false;
+          computeBtn.textContent = "Compute & Plot";
+        }
+        return;
       }
 
-      computeBtn.disabled = false;
-      computeBtn.textContent = "Compute & Plot";
+      if (computeBtn) {
+        computeBtn.disabled = false;
+        computeBtn.textContent = "Compute & Plot";
+      }
 
-      if (!resp.ok || !data.ok) {
-        infoDiv.textContent =
-          "Error from server: " + (data && data.error ? data.error : resp.status);
+      if (!resp.ok || !data || !data.ok) {
+        const errorMsg = (data && data.error) ? data.error : `Server error (status: ${resp.status})`;
+        if (infoDiv) {
+          infoDiv.textContent = "Error from server: " + errorMsg;
+        }
         return;
       }
 
@@ -483,7 +494,9 @@ if (computeBtn) {
           !Array.isArray(data.z) || !Array.isArray(data.t) ||
           data.x.length === 0 || data.y.length === 0 ||
           data.z.length === 0 || data.t.length === 0) {
-        infoDiv.textContent = "Error: Invalid response from server - missing or invalid data arrays";
+        if (infoDiv) {
+          infoDiv.textContent = "Error: Invalid response from server - missing or invalid data arrays";
+        }
         return;
       }
 
@@ -584,9 +597,30 @@ if (computeBtn) {
 
       if (data.symbolic && Object.keys(data.symbolic).length > 0) {
         html += "<h4>Symbolic results</h4>";
+        
+        // Display computation steps if available
+        if (data.symbolic.computation_steps && Array.isArray(data.symbolic.computation_steps)) {
+          html += "<div style='margin-bottom: 15px; padding: 10px; background-color: #f3f4f6; border-left: 4px solid #3b82f6;'>";
+          html += "<strong>Computation Steps:</strong><ol style='margin: 10px 0; padding-left: 20px;'>";
+          data.symbolic.computation_steps.forEach(step => {
+            html += `<li style='margin: 5px 0;'>${step}</li>`;
+          });
+          html += "</ol></div>";
+        }
+        
         for (const key in data.symbolic) {
-          const latex = data.symbolic[key]; // already LaTeX from backend
-          html += `<p><strong>${key}</strong>: <span class="math">\\[${latex}\\]</span></p>`;
+          // Skip computation_steps as we already displayed it
+          if (key === "computation_steps") continue;
+          
+          const value = data.symbolic[key]; // LaTeX from backend or error message
+          
+          // Check if this is an error field (should be displayed as plain text)
+          if (key.endsWith("_error") || key.endsWith("_warning") || key.endsWith("_note")) {
+            html += `<p><strong>${key.replace(/_/g, " ")}</strong>: <span style="color: #dc2626; font-style: italic;">${value}</span></p>`;
+          } else {
+            // Regular LaTeX content
+            html += `<p><strong>${key}</strong>: <span class="math">\\[${value}\\]</span></p>`;
+          }
         }
       }
       infoDiv.innerHTML = html;
@@ -653,15 +687,26 @@ if (computeBtn) {
         data = JSON.parse(text);
       } catch (e) {
         console.error("Failed to parse JSON:", text);
-        throw new Error("Server did not return valid JSON.");
+        if (infoDiv) {
+          infoDiv.textContent = "Error: Server did not return valid JSON. Please try again.";
+        }
+        if (computeBtn) {
+          computeBtn.disabled = false;
+          computeBtn.textContent = "Compute & Plot";
+        }
+        return;
       }
 
-      computeBtn.disabled = false;
-      computeBtn.textContent = "Compute & Plot";
+      if (computeBtn) {
+        computeBtn.disabled = false;
+        computeBtn.textContent = "Compute & Plot";
+      }
 
-      if (!resp.ok || !data.ok) {
-        infoDiv.textContent =
-          "Error from server: " + (data && data.error ? data.error : resp.status);
+      if (!resp.ok || !data || !data.ok) {
+        const errorMsg = (data && data.error) ? data.error : `Server error (status: ${resp.status})`;
+        if (infoDiv) {
+          infoDiv.textContent = "Error from server: " + errorMsg;
+        }
         return;
       }
 
@@ -669,7 +714,9 @@ if (computeBtn) {
       if (!data.X || !data.Y || !data.Z ||
           !Array.isArray(data.X) || !Array.isArray(data.Y) || !Array.isArray(data.Z) ||
           data.X.length === 0 || data.Y.length === 0 || data.Z.length === 0) {
-        infoDiv.textContent = "Error: Invalid response from server - missing or invalid surface data arrays";
+        if (infoDiv) {
+          infoDiv.textContent = "Error: Invalid response from server - missing or invalid surface data arrays";
+        }
         return;
       }
 
@@ -719,9 +766,30 @@ if (computeBtn) {
 
       if (data.symbolic && Object.keys(data.symbolic).length > 0) {
         html += "<h4>Symbolic results</h4>";
+        
+        // Display computation steps if available
+        if (data.symbolic.computation_steps && Array.isArray(data.symbolic.computation_steps)) {
+          html += "<div style='margin-bottom: 15px; padding: 10px; background-color: #f3f4f6; border-left: 4px solid #3b82f6;'>";
+          html += "<strong>Computation Steps:</strong><ol style='margin: 10px 0; padding-left: 20px;'>";
+          data.symbolic.computation_steps.forEach(step => {
+            html += `<li style='margin: 5px 0;'>${step}</li>`;
+          });
+          html += "</ol></div>";
+        }
+        
         for (const key in data.symbolic) {
-          const latex = data.symbolic[key];
-          html += `<p><strong>${key}</strong>: <span class="math">\\[${latex}\\]</span></p>`;
+          // Skip computation_steps as we already displayed it
+          if (key === "computation_steps") continue;
+          
+          const value = data.symbolic[key]; // LaTeX from backend or error message
+          
+          // Check if this is an error field (should be displayed as plain text)
+          if (key.endsWith("_error") || key.endsWith("_warning") || key.endsWith("_note")) {
+            html += `<p><strong>${key.replace(/_/g, " ")}</strong>: <span style="color: #dc2626; font-style: italic;">${value}</span></p>`;
+          } else {
+            // Regular LaTeX content
+            html += `<p><strong>${key}</strong>: <span class="math">\\[${value}\\]</span></p>`;
+          }
         }
       }
       infoDiv.innerHTML = html;

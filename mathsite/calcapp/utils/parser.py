@@ -117,7 +117,7 @@ def parse_bounds(bounds: list, parameters: list):
     if not isinstance(lower_str, str) or not isinstance(upper_str, str):
         raise ValueError("Both bounds must be strings.")
 
-    # Build local dict with correct symbol assumptions
+    
     local_dict = build_local_dict(parameters)
 
     def _parse_string(expr_str: str):
