@@ -510,6 +510,9 @@ def symbolic_formula_for(curve, params):
     elif curve == "tractrix":
         expr = sp.Matrix([t - sp.tanh(t), sp.sech(t)])
 
+    elif curve == "custom_curve":
+        expr = sp.Matrix([0, 0])
+
     else:
         raise ValueError(f"Unknown curve type: {curve}")
 
