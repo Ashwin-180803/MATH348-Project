@@ -642,7 +642,7 @@ def compute_arc_length(parametrization, parameter, bounds):
     # Step 1 - Compute the derivative of the parametrization
     X_t = sp.Matrix([parametrization.diff(parameter)])
     steps["1"] = [X_t]
-
+    
     # Step 2 - Compute the magnitude of the derivative and simplify
     magnitude = X_t.norm()
 
@@ -652,7 +652,7 @@ def compute_arc_length(parametrization, parameter, bounds):
 
     # Step 3 - Integrate magnitude to get the arc length and simplify
     arc_length_integral = sp.Integral(magnitude, (parameter, bounds[0], bounds[1]))
-
+    
     try:  # In case the integral is too hard
         arc_length = func_timeout(6, arc_length_integral.doit)
     except FunctionTimedOut:
@@ -688,7 +688,7 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
 
     # Step 1 - Compute arc length
     arc_length, _ = compute_arc_length(parametrization, parameter, bounds)
-
+    
     if isinstance(arc_length, dict):
         return arc_length  # Return the dict with message if integral failed
 

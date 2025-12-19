@@ -130,7 +130,7 @@ def compute(request):
             param_list.append(
                 parser.parse_input(str(param_dict.get("z")), str([parameter]))
             )
-
+            has_arbitrary_constants = parser.find_constants(param_list, parameter) != []
             try:
                 n = int(data.get("n", 400))
                 if n <= 0:
@@ -209,6 +209,7 @@ def compute(request):
                             steps = functions.get_computation_steps(
                                 "reparam_arc_length", param_list, [parameter]
                             )
+
                             symbolic["computation_steps"] = steps
                         except Exception:
                             pass
@@ -293,10 +294,8 @@ def compute(request):
                                     )
 
                             if detailed_steps:
-                                symbolic[
-                                    "reparametrization_steps_detail"
-                                ] = _format_expression_with_steps(
-                                    None, detailed_steps
+                                symbolic["reparametrization_steps_detail"] = (
+                                    _format_expression_with_steps(None, detailed_steps)
                                 )
                     except Exception as e:
                         error_msg = (
@@ -737,9 +736,9 @@ def compute(request):
                                 )
 
                         if gauss_steps:
-                            symbolic[
-                                "gauss_equations_steps_detail"
-                            ] = _format_expression_with_steps(None, gauss_steps)
+                            symbolic["gauss_equations_steps_detail"] = (
+                                _format_expression_with_steps(None, gauss_steps)
+                            )
                     except Exception as e:
                         error_msg = str(e) if str(e) else f"{type(e).__name__}"
                         symbolic["gauss_eq_error"] = (
@@ -782,9 +781,9 @@ def compute(request):
                                 )
 
                         if codazzi_steps:
-                            symbolic[
-                                "codazzi_equations_steps_detail"
-                            ] = _format_expression_with_steps(None, codazzi_steps)
+                            symbolic["codazzi_equations_steps_detail"] = (
+                                _format_expression_with_steps(None, codazzi_steps)
+                            )
                     except Exception as e:
                         error_msg = str(e) if str(e) else f"{type(e).__name__}"
                         symbolic["codazzi_eq_error"] = (
