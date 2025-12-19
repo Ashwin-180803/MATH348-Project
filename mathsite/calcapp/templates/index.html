@@ -1,0 +1,240 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Curves & Surfaces — Calculator</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'styles.css' %}">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg-full.js" async></script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Curves & Surfaces — Interactive Calculator</h1>
+
+    <div class="controls">
+      
+      <div class="tabs main-tabs">
+        <button class="tab active" data-mode-tab="curve">Curves</button>
+        <button class="tab" data-mode-tab="surface">Surfaces</button>
+      </div>
+
+      
+      <div id="curve-quantity-tabs" class="tabs sub-tabs">
+        <button class="tab active" data-quantity-tab="">
+          Numeric only
+        </button>
+        <button class="tab" data-quantity-tab="arc_length">
+          Arc-length s(t)
+        </button>
+        <button class="tab" data-quantity-tab="reparam_arc_length">
+          Reparametrization by arc length
+        </button>
+        <button class="tab" data-quantity-tab="frenet">
+          Frenet–Serret apparatus
+        </button>
+      </div>
+
+      
+      <div id="surface-quantity-tabs" class="tabs sub-tabs" style="display:none;">
+        <button class="tab active" data-quantity-tab="">
+          Numeric only
+        </button>
+        <button class="tab" data-quantity-tab="first_form">
+          First Fundamental Form (E,F,G)
+        </button>
+        <button class="tab" data-quantity-tab="second_form">
+          Second Fundamental Form (L,M,N)
+        </button>
+        <button class="tab" data-quantity-tab="gaussian_curvature">
+          Gaussian curvature K
+        </button>
+        <button class="tab" data-quantity-tab="mean_curvature">
+          Mean curvature H
+        </button>
+        <button class="tab" data-quantity-tab="principal_curvatures">
+          Principal curvatures k₁, k₂
+        </button>
+        <button class="tab" data-quantity-tab="christoffel">
+          Christoffel symbols Γᵢⱼᵏ
+        </button>
+        <button class="tab" data-quantity-tab="gauss_equations">
+          Gauss equations
+        </button>
+        <button class="tab" data-quantity-tab="codazzi_equations">
+          Codazzi equations
+        </button>
+      </div>
+
+      
+      <label class="hidden-control">
+        Mode:
+        <select id="mode">
+          <option value="curve" selected>Curve</option>
+          <option value="surface">Surface</option>
+        </select>
+      </label>
+
+      <label class="hidden-control">
+        Quantity:
+        <select id="quantity">
+          <option value="">Numeric only</option>
+
+          <optgroup label="Curves">
+            <option value="arc_length">Arc-length s(t)</option>
+            <option value="reparam_arc_length">Reparametrization by arc length</option>
+            <option value="frenet">Frenet–Serret apparatus</option>
+          </optgroup>
+
+          <optgroup label="Surfaces">
+            <option value="first_form">First Fundamental Form (E,F,G)</option>
+            <option value="second_form">Second Fundamental Form (L,M,N)</option>
+            <option value="gaussian_curvature">Gaussian curvature K</option>
+            <option value="mean_curvature">Mean curvature H</option>
+            <option value="principal_curvatures">Principal curvatures k₁, k₂</option>
+            <option value="christoffel">Christoffel symbols Γᵢⱼᵏ</option>
+            <option value="gauss_equations">Gauss equations</option>
+            <option value="codazzi_equations">Codazzi equations</option>
+          </optgroup>
+        </select>
+      </label>
+
+      <!-- Curve UI -->
+      <div id="curve-section">
+        <div class="curve-row">
+          <label>Curve:</label>
+          <select id="curve" class="curve-select">
+            <option value="helix">Helix</option>
+            <option value="circle">Circle</option>
+            <option value="ellipse">Ellipse</option>
+            <option value="line">Line</option>
+            <option value="cycloid">Cycloid</option>
+            <option value="twisted_cubic">Twisted cubic</option>
+            <option value="catenary">Catenary</option>
+            <option value="hyperbola">Hyperbola</option>
+            <option value="tractrix">Tractrix</option>
+            <option value="custom_curve">Custom curve</option>
+          </select>
+        </div>
+
+        <!-- Parametrization UI (on its own line) -->
+        <div id="param-display" class="param-display">
+          <span>X(</span>
+          <input class="var-input" id="var1" type="text">
+          <span>) =</span>
+          <input class="coord-input" id="coord1" type="text">
+          <span>,</span>
+          <input class="coord-input" id="coord2" type="text">
+          <span>,</span>
+          <input class="coord-input" id="coord3" type="text">
+        </div>
+
+
+        <div id="curve-params"></div>
+
+        <!-- t-range: one line, endpoints inline -->
+        <div class="param-row">
+          <label>t-range:</label>
+          <input id="t0" type="text" value="0"> to
+          <input id="t1" type="text" value="2*pi">
+        </div>
+
+        
+        <div class="param-row">
+          <label>Points:</label>
+          <input id="n" type="number" value="400">
+        </div>
+      </div>
+
+      <!-- Surface UI -->
+      <div id="surface-section" style="display:none;">
+        <div class="surface-row">
+          <label>Surface:</label>
+          <select id="surface" class="curve-select">
+            <option value="plane">Plane</option>
+            <option value="cylinder">Cylinder</option>
+            <option value="cone">Cone</option>
+            <option value="paraboloid">Paraboloid</option>
+            <option value="hyperbolic_paraboloid">Hyperbolic Paraboloid</option>
+            <option value="sphere">Sphere</option>
+            <option value="torus">Torus</option>
+            <option value="helicoid">Helicoid</option>
+            <option value="catenoid">Catenoid</option>
+            <option value="mobius">Möbius strip</option>
+            <option value="klein">Klein bottle</option>
+            <option value="enneper">Enneper surface</option>
+            <option value="custom_surface">Custom surface</option>
+          </select>
+        </div>
+
+        <!-- Parametrization UI for surfaces (on its own line) -->
+        <div id="surface-param-display" class="param-display">
+          <span>X(</span>
+          <input class="var-input" id="us" type="text">
+          <span>,</span>
+          <input class="var-input" id="vs" type="text">
+          <span>) =</span>
+          <input class="coord-input" id="usx" type="text" placeholder="X(u,v)">
+          <span>,</span>
+          <input class="coord-input" id="usy" type="text" placeholder="Y(u,v)">
+          <span>,</span>
+          <input class="coord-input" id="usz" type="text" placeholder="Z(u,v)">
+        </div>
+
+        <div id="surface-params"></div>
+
+        <!-- u-range: one line -->
+        <div class="param-row">
+          <label>u-range:</label>
+          <input id="u0" type="text" value="0"> to
+          <input id="u1" type="text" value="2*pi">
+        </div>
+
+        <!-- v-range: next line -->
+        <div class="param-row">
+          <label>v-range:</label>
+          <input id="v0" type="text" value="0"> to
+          <input id="v1" type="text" value="2*pi">
+        </div>
+
+        <!-- Resolution: next line -->
+        <div class="param-row">
+          <label>Resolution:</label>
+          <input id="nu" type="number" value="60"> x
+          <input id="nv" type="number" value="60">
+        </div>
+
+        
+        <label class="param-row" style="align-items:center; gap:0.5rem;">
+          <input id="compute_symbolic" type="checkbox">
+          <span>Symbolic forms (for surfaces)</span>
+        </label>
+      </div>
+
+      <button id="compute">Compute & Plot</button>
+    </div>
+
+    <div id="plot" class="plot"></div>
+    <div id="info" class="info"></div>
+  </div>
+
+  <script src="{% static 'script.js' %}"></script>
+  <script src="{% static 'param_script.js' %}"></script>
+</body>
+
+</html>
