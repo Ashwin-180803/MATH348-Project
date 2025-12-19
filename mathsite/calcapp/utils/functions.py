@@ -38,22 +38,22 @@ def get_default_curve_expressions(curve, params):
     """Get the default expressions for a curve type as strings, matching param_script.js defaults"""
     if curve == "helix":
         return {
-            "x": "cos(t)",
-            "y": "sin(t)",
-            "z": "0.2*t",
+            "x": "R * cos(t)",
+            "y": "R * sin(t)",
+            "z": "a * t",
         }
 
     if curve == "circle":
         return {
-            "x": "cos(t)",
-            "y": "sin(t)",
+            "x": "R * cos(t)",
+            "y": "R * sin(t)",
             "z": "0",
         }
 
     if curve == "ellipse":
         return {
-            "x": "2*cos(t)",
-            "y": "sin(t)",
+            "x": "a * cos(t)",
+            "y": "b * sin(t)",
             "z": "0",
         }
 
@@ -66,22 +66,22 @@ def get_default_curve_expressions(curve, params):
 
     if curve == "cycloid":
         return {
-            "x": "t - sin(t)",
-            "y": "1 - cos(t)",
+            "x": "r*(t - sin(t))",
+            "y": "r*(1 - cos(t))",
             "z": "0",
         }
 
     if curve == "twisted_cubic":
         return {
             "x": "t",
-            "y": "t^2",
-            "z": "t^3",
+            "y": "t**2",
+            "z": "t**3",
         }
 
     if curve == "catenary":
         return {
             "x": "t",
-            "y": "cosh(t/2)",
+            "y": "a * cosh(t/a)",
             "z": "0",
         }
 
@@ -283,7 +283,7 @@ def get_default_surface_expressions(surface, params):
         return {
             "x": "u",
             "y": "v",
-            "z": "u + v",
+            "z": "a * u + b * v",
         }
 
     if surface == "cylinder":
@@ -295,9 +295,9 @@ def get_default_surface_expressions(surface, params):
 
     if surface == "cone":
         return {
-            "x": "v * cos(u)",
-            "y": "v * sin(u)",
-            "z": "v",
+            "x": "u * cos(v)",
+            "y": "u * sin(v)",
+            "z": "u",
         }
 
     if surface == "paraboloid":
@@ -316,9 +316,9 @@ def get_default_surface_expressions(surface, params):
 
     if surface == "sphere":
         return {
-            "x": "cos(v) * sin(u)",
-            "y": "sin(u) * sin(v)",
-            "z": "cos(u)",
+            "x": "R * sin(u) * cos(v)",
+            "y": "R * sin(u) * sin(v)",
+            "z": "R * cos(u)",
         }
 
     if surface == "torus":
@@ -337,8 +337,8 @@ def get_default_surface_expressions(surface, params):
 
     if surface == "catenoid":
         return {
-            "x": "cosh(v) * cos(u)",
-            "y": "cosh(v) * sin(u)",
+            "x": "a * cosh(v/a) * cos(u)",
+            "y": "a * cosh(v/a) * sin(u)",
             "z": "v",
         }
 
@@ -847,7 +847,7 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
     # Step 3 - Find second derivative (acceleration)
     X_tt = Matrix([sp.diff(coord, parameter) for coord in X_t])
     X_tt = sp.simplify(X_tt)
-    
+
     if all(sp.simplify(coord) == 0 for coord in X_tt):
         raise ValueError("Frenet-Serret apparatus undefined for straight lines.")
 

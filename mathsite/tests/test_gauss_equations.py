@@ -4,9 +4,6 @@ from calcapp.utils.parser import parse_input
 from calcapp.utils.functions import compute_gauss_equations
 
 
-# ----------------------------
-# Helper: robust single comparison
-# ----------------------------
 def assert_gauss_equalities(
     first_gauss_rhs,
     second_gauss_rhs,

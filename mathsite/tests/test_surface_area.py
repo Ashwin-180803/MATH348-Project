@@ -4,25 +4,16 @@ import pytest
 from calcapp.utils.functions import compute_first_fundamental_form, compute_surface_area
 
 
-# ----------------------------
-# Helper: expression compare
-# ----------------------------
 def assert_expr_equal(A, B):
     """
     Assert two sympy expressions are equal (symbolically).
     Uses simplify / nsimplify to handle rational floats, etc.
     """
-    # try simplification first
     diff = sp.simplify(sp.nsimplify(A) - sp.nsimplify(B))
     if diff != 0:
         raise AssertionError(f"Expressions differ:\nA={A}\nB={B}\nA-B={diff}")
 
-
-# ===============================================================
-# Constants for symbolic bounds used by all symbolic tests
-# ===============================================================
 u1, u2, v1, v2 = sp.symbols("u1 u2 v1 v2", real=True)
-
 
 # ===============================================================
 # 1. PLANE
@@ -46,7 +37,6 @@ def test_plane_symbolic():
     X = [a * u + b * v, c * u + d * v, 0]
     X = parse_input(str(X), str([u, v]))
 
-    # compute integrand via first fundamental form
     M = compute_first_fundamental_form(X, [u, v])
     E = M[0, 0]
     F = M[0, 1]

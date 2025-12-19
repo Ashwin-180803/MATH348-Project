@@ -4,9 +4,6 @@ from calcapp.utils.parser import parse_input
 from calcapp.utils.functions import compute_unit_normal_vector
 
 
-# ====================================================================
-# Helper: vector comparison allowing ± sign, symbolic normalization
-# ====================================================================
 def assert_unit_normals_equal(n1, n2):
     n1 = sp.Matrix(n1)
     n2 = sp.Matrix(n2)
@@ -14,11 +11,9 @@ def assert_unit_normals_equal(n1, n2):
     if n1.shape != n2.shape:
         raise AssertionError(f"Shape mismatch: {n1.shape} vs {n2.shape}")
 
-    # Normalize both
     n1 = n1 / sp.sqrt(sum(c**2 for c in n1))
     n2 = n2 / sp.sqrt(sum(c**2 for c in n2))
 
-    # Symbol normalization
     syms1 = sorted(n1.free_symbols, key=lambda s: s.name)
     syms2 = sorted(n2.free_symbols, key=lambda s: s.name)
     if len(syms1) != len(syms2):

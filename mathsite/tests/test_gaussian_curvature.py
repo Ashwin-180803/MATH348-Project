@@ -298,7 +298,7 @@ def test_gaussian_curvature_helicoid_symbolic():
 
 
 # ======================================================================
-# 10. NONLINEAR WEIRD SURFACE
+# 10. NONLINEAR SURFACE
 # K = det(I^-1 II)
 # ======================================================================
 

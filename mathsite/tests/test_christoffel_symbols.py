@@ -4,9 +4,6 @@ from calcapp.utils.parser import parse_input
 from calcapp.utils.functions import compute_christoffel_symbols
 
 
-# ----------------------------
-# Helper: compute expected Christoffel symbols from E,F,G
-# ----------------------------
 def expected_christoffel(E, F, G, u, v):
     E_u, E_v = sp.diff(E, u), sp.diff(E, v)
     F_u, F_v = sp.diff(F, u), sp.diff(F, v)
@@ -352,7 +349,7 @@ def test_christoffel_helicoid_symbolic():
 
 
 # ======================================================================
-# 10. NONLINEAR WEIRD SURFACE
+# 10. NONLINEAR SURFACE
 # X(u,v) = (a u^2 v, b u v^2, exp(a u + b v))
 # ======================================================================
 def test_christoffel_weird_surface_numeric():

@@ -4,9 +4,6 @@ from calcapp.utils.parser import parse_input
 from calcapp.utils.functions import compute_codazzi_equations
 
 
-# ----------------------------
-# Helper: robust single comparison
-# ----------------------------
 def assert_codazzi_equalities(
     first_codazzi_rhs, second_codazzi_rhs, first_codazzi_lhs, second_codazzi_lhs
 ):

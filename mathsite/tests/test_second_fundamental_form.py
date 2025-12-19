@@ -6,9 +6,6 @@ from calcapp.utils.functions import (
 )
 
 
-# ----------------------------
-# Helper: symbolic matrix compare
-# ----------------------------
 def assert_matrix_equal(A, B):
     assert A.shape == B.shape
     symsA = sorted(A.free_symbols, key=lambda s: s.name)
@@ -209,7 +206,7 @@ def test_elliptic_surface_numeric_second():
     X = [u + v, u - v, u * v]
     X = parse_input(str(X), str([u, v]))
     II, _ = compute_second_fundamental_form(X, [u, v])
-    # N will have a dot with second derivatives; compute manually: only u,v mixed term gives 0
+
     expected = sp.Matrix(
         [
             [0, -2 / sp.sqrt((u + v) ** 2 + (u - v) ** 2 + 4)],
@@ -225,8 +222,7 @@ def test_elliptic_surface_symbolic_second():
     X = [u + v, a * u - b * v, a * b * u * v]
     X = parse_input(str(X), str([u, v]))
     II, _ = compute_second_fundamental_form(X, [u, v])
-    # Expected matrix computed manually: L = N dot Xuu, M = N dot Xuv, N = N dot Xvv
-    # For simplicity, we set symbolic zero
+
     expected = sp.Matrix(
         [
             [
@@ -317,7 +313,7 @@ def test_helicoid_symbolic_second():
 
 
 # ===============================================================
-# 10. NONLINEAR WEIRD SURFACE
+# 10. NONLINEAR SURFACE
 # X(u,v) = (a u^2 v, b u v^2, exp(a u + b v))
 # ===============================================================
 def test_weird_surface_numeric_second():

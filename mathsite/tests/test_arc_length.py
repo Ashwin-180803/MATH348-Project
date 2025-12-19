@@ -4,15 +4,11 @@ from calcapp.utils.parser import parse_input
 from calcapp.utils.functions import compute_arc_length, true_simplify
 
 
-# --------------------------------------------------------------
-# Helper: arc length scalar comparison
-# --------------------------------------------------------------
 def assert_arc_lengths_equal(v1, v2):
     """Compare two symbolic arc lengths robustly (scalar comparison)."""
     v1 = sp.sympify(v1)
     v2 = sp.sympify(v2)
 
-    # Collect and canonicalize symbols
     syms1 = sorted(v1.free_symbols, key=lambda s: s.name)
     syms2 = sorted(v2.free_symbols, key=lambda s: s.name)
 
@@ -24,7 +20,6 @@ def assert_arc_lengths_equal(v1, v2):
     v1 = v1.subs(dict(zip(syms1, canon)))
     v2 = v2.subs(dict(zip(syms2, canon)))
 
-    # Simplify
     v1 = sp.nsimplify(true_simplify(v1), rational=True)
     v2 = sp.nsimplify(true_simplify(v2), rational=True)
 
@@ -32,7 +27,7 @@ def assert_arc_lengths_equal(v1, v2):
 
     # For cases involving non-computable integrals
     if isinstance(v1, sp.Integral) and isinstance(v2, sp.Integral):
-        # Extract integrand + limits
+        # Extract integrand and limits
         f1, lims1 = v1.function, v1.limits
         f2, lims2 = v2.function, v2.limits
 
@@ -43,9 +38,6 @@ def assert_arc_lengths_equal(v1, v2):
         raise AssertionError(f"Arc lengths differ: {v1} vs {v2}")
 
 
-# --------------------------------------------------------------
-# Helper: expected arc length
-# --------------------------------------------------------------
 def expected_arc_length(X, t, bounds):
     X = [sp.sympify(expr) for expr in X]
     Xt = sp.Matrix([sp.diff(expr, t) for expr in X])
@@ -266,7 +258,7 @@ def test_helix_symbolic():
 
 
 # ===============================================================
-# 10. WEIRD NONLINEAR CURVE
+# 10. NONLINEAR CURVE
 # ===============================================================
 
 

@@ -3,9 +3,6 @@ import pytest
 from calcapp.utils.functions import compute_frenet_serret_apparatus
 
 
-# --------------------------------------------------------------
-# Helper comparison
-# --------------------------------------------------------------
 def assert_vectors_equal(v1, v2):
     assert len(v1) == len(v2)
     for a, b in zip(v1, v2):

@@ -3,40 +3,29 @@ import pytest
 from calcapp.utils.parser import parse_input
 from calcapp.utils.functions import compute_shape_operator
 
-
-# ----------------------------
-# Helper: symbolic matrix compare
-# ----------------------------
 def assert_matrix_equal(A, B):
-    # shapes must match
     assert A.shape == B.shape
 
-    # collect symbols
     symsA = sorted(A.free_symbols, key=lambda s: s.name)
     symsB = sorted(B.free_symbols, key=lambda s: s.name)
 
     if len(symsA) != len(symsB):
         raise AssertionError("Matrices use different numbers of symbols")
 
-    # canonical symbols
     canon = [sp.Symbol(f"x{i}") for i in range(len(symsA))]
 
     subsA = dict(zip(symsA, canon))
     subsB = dict(zip(symsB, canon))
 
-    # substitute
     A2 = A.subs(subsA)
     B2 = B.subs(subsB)
 
-    # simplify entries
     A2 = A2.applyfunc(sp.simplify)
     B2 = B2.applyfunc(sp.simplify)
 
-    # convert floats → rationals
     A2 = A2.applyfunc(lambda x: sp.nsimplify(x, rational=True))
     B2 = B2.applyfunc(lambda x: sp.nsimplify(x, rational=True))
 
-    # final elementwise compare
     for a, b in zip(A2, B2):
         if sp.simplify(a - b) != 0:
             raise AssertionError(
@@ -261,8 +250,6 @@ def test_shape_hyperbolic_paraboloid_symbolic():
 # ======================================================================
 # 7. ELLIPTIC TYPE SURFACE (NON-ORTHOGONAL)
 # X(u,v) = (u+v, a u − b v, ab u v)
-# Shape operator computed from II and I:
-# Here we hardcode the final simplified expected matrix
 # ======================================================================
 
 
@@ -272,7 +259,7 @@ def test_shape_elliptic_surface_numeric():
     Xu = sp.Matrix([1, 1, v])
     Xv = sp.Matrix([1, -1, u])
     n = (Xu.cross(Xv)).normalized()
-    # Compute II manually:
+
     Xuu = sp.Matrix([0, 0, 0])
     Xuv = sp.Matrix([0, 0, 1])
     Xvv = sp.Matrix([0, 0, 0])
@@ -381,9 +368,8 @@ def test_shape_helicoid_symbolic():
 
 
 # ======================================================================
-# 10. NONLINEAR WEIRD SURFACE
+# 10. NONLINEAR SURFACE
 # X(u,v) = (a u² v, b u v², exp(a u + b v))
-# We compute II and I explicitly so expected is exact.
 # ======================================================================
 
 

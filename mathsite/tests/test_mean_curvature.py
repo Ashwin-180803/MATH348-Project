@@ -17,17 +17,13 @@ def assert_mean_curvature_equal(H, expected, tol=1e-12):
         expected : sympy expression or numeric
         tol : float, tolerance for numeric comparison
     """
-    # Ensure both are sympy expressions
     H = sp.sympify(H)
     expected = sp.sympify(expected)
 
-    # Try symbolic simplification first
     diff = sp.simplify(H - expected)
     if diff == 0:
         return True
 
-    # If not exactly zero, try numeric evaluation
-    # Substitute 1 for all free symbols if any remain
     free_syms = list(H.free_symbols.union(expected.free_symbols))
     subs = {s: 1 for s in free_syms} if free_syms else {}
     H_val = float(H.subs(subs).evalf())
@@ -310,7 +306,7 @@ def test_mean_curvature_helicoid_symbolic():
 
 
 # ======================================================================
-# 10. NONLINEAR WEIRD SURFACE
+# 10. NONLINEAR SURFACE
 # H computed from trace(I^-1 II)/2
 # ======================================================================
 

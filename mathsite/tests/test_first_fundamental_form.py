@@ -4,39 +4,29 @@ import pytest
 from calcapp.utils.functions import compute_first_fundamental_form
 
 
-# ----------------------------
-# Helper: symbolic matrix compare
-# ----------------------------
 def assert_matrix_equal(A, B):
-    # shapes must match
     assert A.shape == B.shape
 
-    # collect symbols
     symsA = sorted(A.free_symbols, key=lambda s: s.name)
     symsB = sorted(B.free_symbols, key=lambda s: s.name)
 
     if len(symsA) != len(symsB):
         raise AssertionError("Matrices use different numbers of symbols")
 
-    # canonical symbols
     canon = [sp.Symbol(f"x{i}") for i in range(len(symsA))]
 
     subsA = dict(zip(symsA, canon))
     subsB = dict(zip(symsB, canon))
 
-    # substitute
     A2 = A.subs(subsA)
     B2 = B.subs(subsB)
 
-    # simplify entries
     A2 = A2.applyfunc(sp.simplify)
     B2 = B2.applyfunc(sp.simplify)
 
-    # convert floats → rationals
     A2 = A2.applyfunc(lambda x: sp.nsimplify(x, rational=True))
     B2 = B2.applyfunc(lambda x: sp.nsimplify(x, rational=True))
 
-    # final elementwise compare
     for a, b in zip(A2, B2):
         if sp.simplify(a - b) != 0:
             raise AssertionError(
@@ -298,7 +288,7 @@ def test_helicoid_symbolic():
 
 
 # ===============================================================
-# 10. NONLINEAR WEIRD SURFACE
+# 10. NONLINEAR SURFACE
 # X(u,v) = (a u² v, b u v², exp(a u + b v))
 # ===============================================================
 
