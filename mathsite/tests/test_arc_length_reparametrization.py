@@ -8,9 +8,6 @@ from calcapp.utils.functions import (
 )
 
 
-# --------------------------------------------------------------
-# Helper: arc length scalar comparison
-# --------------------------------------------------------------
 def assert_arc_lengths_equal(result, expected):
     """
     Assert that two parametric curves result(s) and expected(s)
@@ -47,6 +44,7 @@ def test_line_numeric():
 
     Xp = parse_input(str(X), str([t]))
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
 
     s = result[0].free_symbols.pop()
     expected = [3 * s / 5, 4 * s / 5, 0]
@@ -62,6 +60,7 @@ def test_line_symbolic():
 
     Xp = parse_input(str(X), str([t]))
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     expected = [
         a * s / sp.sqrt(a**2 + b**2 + c**2),
@@ -75,7 +74,6 @@ def test_line_symbolic():
 # ======================================================================
 # 2. CIRCLE ARC
 # X(t) = (R cos t, R sin t, 0)
-# bounds shifted (1 to t)
 # ======================================================================
 
 
@@ -86,6 +84,7 @@ def test_circle_numeric():
     bounds = [1, t]
 
     Xp = parse_input(str(X), str([t]))
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     expected = [R * sp.cos(s / R + 1), R * sp.sin(s / R + 1), 0]
@@ -101,6 +100,7 @@ def test_circle_symbolic():
 
     Xp = parse_input(str(X), str([t]))
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     expected = [R * sp.cos(s / R + 1), R * sp.sin(s / R + 1), 0]
 
@@ -110,7 +110,6 @@ def test_circle_symbolic():
 # ======================================================================
 # 3. HELIX
 # X(t) = (a cos t, a sin t, b t)
-# bounds [-2, t]
 # ======================================================================
 
 
@@ -122,6 +121,7 @@ def test_helix_numeric():
     bounds = [-2, t]
 
     Xp = parse_input(str(X), str([t]))
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     expected = [
@@ -141,8 +141,10 @@ def test_helix_symbolic():
 
     Xp = parse_input(str(X), str([t]))
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     L = sp.sqrt(a**2 + b**2)
+    expected = [a * sp.cos((s / L) - 2), a * sp.sin((s / L) - 2), b * ((s / L) - 2)]
     expected = [a * sp.cos((s / L) - 2), a * sp.sin((s / L) - 2), b * ((s / L) - 2)]
 
     assert_arc_lengths_equal(result, expected)
@@ -151,7 +153,6 @@ def test_helix_symbolic():
 # ======================================================================
 # 4. PARABOLA
 # X(t) = (t, t^2, 0)
-# bounds  [0, 3]
 # ======================================================================
 
 
@@ -161,6 +162,7 @@ def test_parabola_numeric():
     bounds = [0, t]
 
     Xp = parse_input(str(X), str([t]))
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     expected = [s / sp.sqrt(1 + sp.pi**2), sp.pi * s / sp.sqrt(1 + sp.pi**2), 0]
@@ -176,6 +178,7 @@ def test_parabola_symbolic():
 
     Xp = parse_input(str(X), str([t]))
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     expected = [s / sp.sqrt(1 + a**2), a * s / sp.sqrt(1 + a**2), 0]
 
@@ -185,7 +188,6 @@ def test_parabola_symbolic():
 # ======================================================================
 # 5. EXPONENTIAL CURVE
 # X(t) = (exp(a t), exp(b t), 0)
-# bounds [2, 5]
 # ======================================================================
 
 
@@ -195,6 +197,7 @@ def test_exponential_numeric():
     bounds = [sp.log(2), t]
 
     Xp = parse_input(str(X), str([t]))
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     expected = [
@@ -214,6 +217,7 @@ def test_exponential_symbolic():
     bounds = [sp.log(2), t]
 
     Xp = parse_input(str(X), str([t]))
+    result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     result, _ = compute_arc_length_reparametrization(Xp, t, bounds)
     s = result[0].free_symbols.pop()
     expected = [

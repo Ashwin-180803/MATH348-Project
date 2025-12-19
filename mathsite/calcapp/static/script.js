@@ -149,11 +149,14 @@ const paramTemplates = {
   cycloid: [],
   twisted_cubic: [],
   catenary: [],
+  catenary: [],
   hyperbola: [],
   tractrix: [],
 };
 
 const surfaceTemplates = {
+  sphere: [],
+  torus: [],
   sphere: [],
   torus: [],
   paraboloid: [],

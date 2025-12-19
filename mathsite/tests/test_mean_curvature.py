@@ -17,17 +17,13 @@ def assert_mean_curvature_equal(H, expected, tol=1e-12):
         expected : sympy expression or numeric
         tol : float, tolerance for numeric comparison
     """
-    # Ensure both are sympy expressions
     H = sp.sympify(H)
     expected = sp.sympify(expected)
 
-    # Try symbolic simplification first
     diff = sp.simplify(H - expected)
     if diff == 0:
         return True
 
-    # If not exactly zero, try numeric evaluation
-    # Substitute 1 for all free symbols if any remain
     free_syms = list(H.free_symbols.union(expected.free_symbols))
     subs = {s: 1 for s in free_syms} if free_syms else {}
     H_val = float(H.subs(subs).evalf())
@@ -50,6 +46,7 @@ def test_mean_curvature_plane_numeric():
     X = [u, v, 0]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = 0
     assert_mean_curvature_equal(H, expected)
 
@@ -59,6 +56,7 @@ def test_mean_curvature_plane_symbolic():
     a, b, c, d = sp.symbols("a b c d", real=True)
     X = [a * u + b * v, c * u + d * v, 0]
     X = parse_input(str(X), str([u, v]))
+    H, _ = compute_mean_curvature(X, [u, v])
     H, _ = compute_mean_curvature(X, [u, v])
     expected = 0
     assert_mean_curvature_equal(H, expected)
@@ -76,6 +74,7 @@ def test_mean_curvature_cylinder_numeric():
     X = [R * sp.cos(u), R * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = -1 / (2 * R)
     assert_mean_curvature_equal(H, expected)
 
@@ -85,6 +84,7 @@ def test_mean_curvature_cylinder_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [a * sp.cos(u), a * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
+    H, _ = compute_mean_curvature(X, [u, v])
     H, _ = compute_mean_curvature(X, [u, v])
     expected = -1 / (2 * a)
     assert_mean_curvature_equal(H, expected)
@@ -102,6 +102,7 @@ def test_mean_curvature_sphere_numeric():
     X = [R * sp.sin(u) * sp.cos(v), R * sp.sin(u) * sp.sin(v), R * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = -1 / R
     assert_mean_curvature_equal(H, expected)
 
@@ -111,6 +112,7 @@ def test_mean_curvature_sphere_symbolic():
     a = sp.symbols("a", positive=True)
     X = [a * sp.sin(u) * sp.cos(v), a * sp.sin(u) * sp.sin(v), a * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
+    H, _ = compute_mean_curvature(X, [u, v])
     H, _ = compute_mean_curvature(X, [u, v])
     expected = -1 / a
     assert_mean_curvature_equal(H, expected)
@@ -133,6 +135,7 @@ def test_mean_curvature_torus_numeric():
     ]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = -sp.cos(v) / (2 * (R + r * sp.cos(v))) - 1 / (2 * r)
     assert_mean_curvature_equal(H, expected)
 
@@ -146,6 +149,7 @@ def test_mean_curvature_torus_symbolic():
         b * sp.sin(v),
     ]
     X = parse_input(str(X), str([u, v]))
+    H, _ = compute_mean_curvature(X, [u, v])
     H, _ = compute_mean_curvature(X, [u, v])
     expected = -sp.cos(v) / (2 * (a + b * sp.cos(v))) - 1 / (2 * b)
     assert_mean_curvature_equal(H, expected)
@@ -162,6 +166,7 @@ def test_mean_curvature_paraboloid_numeric():
     X = [u, v, u**2 + v**2]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = 2 / ((1 + 4 * u**2 + 4 * v**2) ** (3 / 2)) * (1 + 2 * u**2 + 2 * v**2)
     assert_mean_curvature_equal(H, expected)
 
@@ -171,6 +176,7 @@ def test_mean_curvature_paraboloid_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [u, v, a * u**2 + b * v**2]
     X = parse_input(str(X), str([u, v]))
+    H, _ = compute_mean_curvature(X, [u, v])
     H, _ = compute_mean_curvature(X, [u, v])
     expected = (a * (1 + 4 * b**2 * v**2) + b * (1 + 4 * a**2 * u**2)) / (
         1 + 4 * a**2 * u**2 + 4 * b**2 * v**2
@@ -190,6 +196,7 @@ def test_mean_curvature_hyperbolic_paraboloid_numeric():
     X = [u, v, u**2 - v**2]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = 0
     assert_mean_curvature_equal(H, expected)
 
@@ -199,6 +206,7 @@ def test_mean_curvature_hyperbolic_paraboloid_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [u, v, a * u**2 - b * v**2]
     X = parse_input(str(X), str([u, v]))
+    H, _ = compute_mean_curvature(X, [u, v])
     H, _ = compute_mean_curvature(X, [u, v])
     expected = 0
     assert_mean_curvature_equal(H, expected)
@@ -231,6 +239,7 @@ def test_mean_curvature_elliptic_surface_numeric():
 
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     assert_mean_curvature_equal(H, expected)
 
 
@@ -256,6 +265,7 @@ def test_mean_curvature_elliptic_surface_symbolic():
 
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     assert_mean_curvature_equal(H, expected)
 
 
@@ -270,6 +280,7 @@ def test_mean_curvature_catenoid_numeric():
     X = [sp.cosh(v) * sp.cos(u), sp.cosh(v) * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = 0
     assert_mean_curvature_equal(H, expected)
 
@@ -279,6 +290,7 @@ def test_mean_curvature_catenoid_symbolic():
     a, b = sp.symbols("a b", positive=True)
     X = [a * sp.cosh(v) * sp.cos(u), a * sp.cosh(v) * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
+    H, _ = compute_mean_curvature(X, [u, v])
     H, _ = compute_mean_curvature(X, [u, v])
     expected = 0
     assert_mean_curvature_equal(H, expected)
@@ -295,6 +307,7 @@ def test_mean_curvature_helicoid_numeric():
     X = [u * sp.cos(v), u * sp.sin(v), v]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = 0
     assert_mean_curvature_equal(H, expected)
 
@@ -305,12 +318,13 @@ def test_mean_curvature_helicoid_symbolic():
     X = [a * u * sp.cos(v), a * u * sp.sin(v), b * v]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     expected = 0
     assert_mean_curvature_equal(H, expected)
 
 
 # ======================================================================
-# 10. NONLINEAR WEIRD SURFACE
+# 10. NONLINEAR SURFACE
 # H computed from trace(I^-1 II)/2
 # ======================================================================
 
@@ -332,6 +346,7 @@ def test_mean_curvature_weird_surface_numeric():
     X = [u**2 * v, u * v**2, sp.exp(u + v)]
     X = parse_input(str(X), str([u, v]))
     H, _ = compute_mean_curvature(X, [u, v])
+    H, _ = compute_mean_curvature(X, [u, v])
     assert_mean_curvature_equal(H, expected)
 
 
@@ -352,5 +367,6 @@ def test_mean_curvature_weird_surface_symbolic():
 
     X = [a * u**2 * v, b * u * v**2, sp.exp(a * u + b * v)]
     X = parse_input(str(X), str([u, v]))
+    H, _ = compute_mean_curvature(X, [u, v])
     H, _ = compute_mean_curvature(X, [u, v])
     assert_mean_curvature_equal(H, expected)
