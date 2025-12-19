@@ -55,6 +55,7 @@ def test_line_numeric():
     t = sp.symbols("t", real=True)
     X = parse_input(str([t, 2 * t, 0]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, 3])
+    ds, _ = compute_arc_length(X, t, [0, 3])
     expected = expected_arc_length([t, 2 * t, 0], t, [0, 3])
 
     assert_arc_lengths_equal(ds, expected)
@@ -64,6 +65,7 @@ def test_line_symbolic():
     t = sp.symbols("t", real=True)
     a, b, c, d = sp.symbols("a b c d", real=True, positive=True)
     X = parse_input(str([a * t + b, c * t + d, 0]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([a * t + b, c * t + d, 0], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -79,6 +81,7 @@ def test_circle_numeric():
     R = 2.7
     X = parse_input(str([R * sp.cos(t), R * sp.sin(t), 0]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, sp.pi])
+    ds, _ = compute_arc_length(X, t, [0, sp.pi])
     expected = expected_arc_length([R * sp.cos(t), R * sp.sin(t), 0], t, [0, sp.pi])
     assert_arc_lengths_equal(ds, expected)
 
@@ -87,6 +90,7 @@ def test_circle_symbolic():
     t = sp.symbols("t", real=True)
     a = sp.symbols("a", real=True, positive=True)
     X = parse_input(str([a * sp.cos(t), a * sp.sin(t), 0]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([a * sp.cos(t), a * sp.sin(t), 0], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -102,6 +106,7 @@ def test_sphere_meridian_numeric():
     R = 1.8
     X = parse_input(str([R * sp.sin(t), 0, R * sp.cos(t)]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, sp.pi / 2])
+    ds, _ = compute_arc_length(X, t, [0, sp.pi / 2])
     expected = expected_arc_length([R * sp.sin(t), 0, R * sp.cos(t)], t, [0, sp.pi / 2])
     assert_arc_lengths_equal(ds, expected)
 
@@ -111,6 +116,7 @@ def test_sphere_meridian_symbolic():
     a = sp.symbols("a", real=True, positive=True)
 
     X = parse_input(str([a * sp.sin(t), 0, a * sp.cos(t)]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([a * sp.sin(t), 0, a * sp.cos(t)], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -129,6 +135,7 @@ def test_torus_curve_numeric():
     A = R + r * sp.cos(c)
     X = parse_input(str([A * sp.cos(t), A * sp.sin(t), r * sp.sin(c)]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, sp.pi])
+    ds, _ = compute_arc_length(X, t, [0, sp.pi])
     expected = expected_arc_length(
         [A * sp.cos(t), A * sp.sin(t), r * sp.sin(c)], t, [0, sp.pi]
     )
@@ -140,6 +147,7 @@ def test_torus_curve_symbolic():
     a, b, c = sp.symbols("a b c", real=True, positive=True)
     A = a + b * sp.cos(c)
     X = parse_input(str([A * sp.cos(t), A * sp.sin(t), b * sp.sin(c)]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length(
         [A * sp.cos(t), A * sp.sin(t), b * sp.sin(c)], t, [0, t]
@@ -156,6 +164,7 @@ def test_parabola_numeric():
     t = sp.symbols("t", real=True)
     X = parse_input(str([t, 0, t**2]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, 1])
+    ds, _ = compute_arc_length(X, t, [0, 1])
     expected = expected_arc_length([t, 0, t**2], t, [0, 1])
     assert_arc_lengths_equal(ds, expected)
 
@@ -164,6 +173,7 @@ def test_parabola_symbolic():
     t = sp.symbols("t", real=True)
     a = sp.symbols("a", real=True, positive=True)
     X = parse_input(str([t, 0, a * t**2]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([t, 0, a * t**2], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -178,6 +188,7 @@ def test_hyperbolic_parabola_numeric():
     t = sp.symbols("t", real=True)
     X = parse_input(str([t, 0, t**2 - t]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, 2])
+    ds, _ = compute_arc_length(X, t, [0, 2])
     expected = expected_arc_length([t, 0, t**2 - t], t, [0, 2])
     assert_arc_lengths_equal(ds, expected)
 
@@ -186,6 +197,7 @@ def test_hyperbolic_parabola_symbolic():
     t = sp.symbols("t", real=True)
     a, b = sp.symbols("a b", real=True, positive=True)
     X = parse_input(str([t, 0, a * t**2 - b * t]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([t, 0, a * t**2 - b * t], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -200,6 +212,7 @@ def test_elliptic_curve_numeric():
     t = sp.symbols("t", real=True)
     X = parse_input(str([t, t, t**2]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, 1])
+    ds, _ = compute_arc_length(X, t, [0, 1])
     expected = expected_arc_length([t, t, t**2], t, [0, 1])
     assert_arc_lengths_equal(ds, expected)
 
@@ -208,6 +221,7 @@ def test_elliptic_curve_symbolic():
     t = sp.symbols("t", real=True)
     a, b = sp.symbols("a b", real=True, positive=True)
     X = parse_input(str([t, a * t, a * b * t**2]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([t, a * t, a * b * t**2], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -222,6 +236,7 @@ def test_catenary_numeric():
     t = sp.symbols("t", real=True)
     X = parse_input(str([sp.cosh(t), t, 0]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, 1])
+    ds, _ = compute_arc_length(X, t, [0, 1])
     expected = expected_arc_length([sp.cosh(t), t, 0], t, [0, 1])
     assert_arc_lengths_equal(ds, expected)
 
@@ -230,6 +245,7 @@ def test_catenary_symbolic():
     t = sp.symbols("t", real=True)
     a, b = sp.symbols("a b", real=True, positive=True)
     X = parse_input(str([a * sp.cosh(t), b * t, 0]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([a * sp.cosh(t), b * t], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -244,6 +260,7 @@ def test_helix_numeric():
     t = sp.symbols("t", real=True)
     X = parse_input(str([sp.cos(t), sp.sin(t), 2 * t]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, sp.pi])
+    ds, _ = compute_arc_length(X, t, [0, sp.pi])
     expected = expected_arc_length([sp.cos(t), sp.sin(t), 2 * t], t, [0, sp.pi])
     assert_arc_lengths_equal(ds, expected)
 
@@ -252,6 +269,7 @@ def test_helix_symbolic():
     t = sp.symbols("t", real=True)
     a, b = sp.symbols("a b", real=True, positive=True)
     X = parse_input(str([a * sp.cos(t), a * sp.sin(t), b * t]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([a * sp.cos(t), a * sp.sin(t), b * t], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -266,6 +284,7 @@ def test_weird_curve_numeric():
     t = sp.symbols("t", real=True)
     X = parse_input(str([t**2, t**3, sp.exp(t)]), str([t]))
     ds, _ = compute_arc_length(X, t, [0, 1])
+    ds, _ = compute_arc_length(X, t, [0, 1])
     expected = expected_arc_length([t**2, t**3, sp.exp(t)], t, [0, 1])
     assert_arc_lengths_equal(ds, expected)
 
@@ -274,6 +293,7 @@ def test_weird_curve_symbolic():
     t = sp.symbols("t", real=True)
     a, b = sp.symbols("a b", real=True, positive=True)
     X = parse_input(str([a * t**2, b * t**3, sp.exp(a * t)]), str([t]))
+    ds, _ = compute_arc_length(X, t, [0, t])
     ds, _ = compute_arc_length(X, t, [0, t])
     expected = expected_arc_length([a * t**2, b * t**3, sp.exp(a * t)], t, [0, t])
     assert_arc_lengths_equal(ds, expected)
@@ -287,6 +307,7 @@ def test_weird_curve_symbolic():
 def test_different_variables_numeric():
     m = sp.symbols("m", real=True)
     X = parse_input(str([m, m**2]), str([m]))
+    ds, _ = compute_arc_length(X, m, [0, m])
     ds, _ = compute_arc_length(X, m, [0, m])
     expected = expected_arc_length([m, m**2], m, [0, m])
 

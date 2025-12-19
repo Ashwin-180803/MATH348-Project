@@ -86,6 +86,8 @@ function handleQuantityTabClick(tab, groupTabs) {
     quantitySelect.value = quantity;
   }
 
+  enforceCurveQuantityConstraints();
+
   const computeSymbolicCheckbox = document.getElementById("compute_symbolic");
   if (computeSymbolicCheckbox && modeSelect && modeSelect.value === "surface") {
     computeSymbolicCheckbox.checked = quantity !== "";
@@ -107,6 +109,31 @@ surfaceQuantityTabs.forEach((tab) => {
 });
 
 
+function enforceCurveQuantityConstraints() {
+  if (!curveSelect || !quantitySelect) return;
+
+  const lineOption = Array.from(curveSelect.options || []).find(
+    (opt) => opt.value === "line"
+  );
+  const blockLine = quantitySelect.value === "frenet";
+
+  if (lineOption) {
+    lineOption.disabled = blockLine;
+    lineOption.hidden = blockLine;
+  }
+
+  if (blockLine && curveSelect.value === "line") {
+    const fallback = Array.from(curveSelect.options || []).find(
+      (opt) => opt.value !== "line" && !opt.disabled && !opt.hidden
+    );
+    if (fallback) {
+      curveSelect.value = fallback.value;
+      curveSelect.dispatchEvent(new Event("change"));
+    }
+  }
+}
+
+
 const paramTemplates = {
   helix: [],
   circle: [],
@@ -122,11 +149,14 @@ const paramTemplates = {
   cycloid: [],
   twisted_cubic: [],
   catenary: [],
+  catenary: [],
   hyperbola: [],
   tractrix: [],
 };
 
 const surfaceTemplates = {
+  sphere: [],
+  torus: [],
   sphere: [],
   torus: [],
   paraboloid: [],
@@ -386,6 +416,7 @@ if (curveSelect) renderCurveParams(curveSelect.value);
 if (surfaceSelect) renderSurfaceParams(surfaceSelect.value);
 updateCurveParamDisplay();
 updateSurfaceParamDisplay();
+enforceCurveQuantityConstraints();
 
 
 if (modeSelect) {
@@ -393,6 +424,9 @@ if (modeSelect) {
 }
 if (quantitySelect) {
   quantitySelect.value = "";
+}
+if (quantitySelect) {
+  quantitySelect.addEventListener("change", enforceCurveQuantityConstraints);
 }
 
 

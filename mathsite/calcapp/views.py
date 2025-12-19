@@ -140,7 +140,15 @@ def compute(request):
             except (ValueError, TypeError):
                 n = 400
 
-            fr = functions.compute_frenet_serret_apparatus(param_list, parameter)
+            fr_warning = None
+            try:
+                fr = functions.compute_frenet_serret_apparatus(param_list, parameter)
+            except ValueError as e:
+                fr_warning = str(e)
+                fr = functions.compute_frenet_serret_apparatus(
+                    param_list, parameter, allow_straight_lines=True
+                )
+
             t, R = functions.numeric_curve_positions(
                 curve, params, float(bounds[0]), float(bounds[1]), n
             )
@@ -337,6 +345,9 @@ def compute(request):
                     "trange": f'["{t0_str}", "{t1_str}"]',
                 }
 
+            if fr_warning:
+                symbolic["frenet_warning"] = fr_warning
+
             return JsonResponse(
                 {
                     "ok": True,
@@ -349,6 +360,7 @@ def compute(request):
                     "torsion": frenet_data["torsion"],
                     "arc_length": frenet_data["arc_length"],
                     "symbolic": symbolic,
+                    "frenet_warning": fr_warning,
                     "variable_param": display_params["variable_param"],
                     "parametrization": display_params["parametrization"],
                     "trange": display_params["trange"],

@@ -13,3 +13,4 @@ pytest-django==4.11.1
 sqlparse==0.5.3
 sympy==1.14.0
 tzdata==2025.2
+plotly==2.13.0

@@ -809,8 +809,10 @@ def compute_surface_area(parametrization, parameters, u_bounds, v_bounds):
 
     return surface_area, steps
 
+    return surface_area, steps
 
-def compute_frenet_serret_apparatus(parametrization, parameter):
+
+def compute_frenet_serret_apparatus(parametrization, parameter, allow_straight_lines=False):
     """
     Calculate the Frenet-Serret apparatus of a curve given its parametrization.
 
@@ -832,6 +834,7 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
         }
     """
     steps = {}
+    straight_line_message = "Frenet-Serret apparatus undefined for straight lines."
 
     # Step 1 - Find first derivative (velocity) and simplify
     X_t = Matrix([sp.diff(coord, parameter) for coord in parametrization])
@@ -847,9 +850,24 @@ def compute_frenet_serret_apparatus(parametrization, parameter):
     # Step 3 - Find second derivative (acceleration)
     X_tt = Matrix([sp.diff(coord, parameter) for coord in X_t])
     X_tt = sp.simplify(X_tt)
+    
 
     if all(sp.simplify(coord) == 0 for coord in X_tt):
-        raise ValueError("Frenet-Serret apparatus undefined for straight lines.")
+        if not allow_straight_lines:
+            raise ValueError(straight_line_message)
+
+        # Straight line fallback: curvature is zero, normal/binormal are undefined
+        zero_curvature = sp.Integer(0)
+        nan_vector = Matrix([sp.nan] * len(X_t))
+        frenet_serret_dict = {
+            "T": T,
+            "N": nan_vector,
+            "B": nan_vector,
+            "kappa": zero_curvature,
+            "tau": sp.nan,
+        }
+        steps["warning"] = [straight_line_message]
+        return frenet_serret_dict, steps
 
     steps["3"] = [X_tt]
 

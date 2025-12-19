@@ -45,6 +45,7 @@ def test_shape_plane_numeric():
     X = [u, v, 0]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     expected = sp.zeros(2)
     assert_matrix_equal(S, expected)
 
@@ -54,6 +55,7 @@ def test_shape_plane_symbolic():
     a, b, c, d = sp.symbols("a b c d", real=True, positive=True)
     X = [a * u + b * v, c * u + d * v, 0]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     expected = sp.zeros(2)
     assert_matrix_equal(S, expected)
@@ -73,6 +75,7 @@ def test_shape_cylinder_numeric():
     X = [R * sp.cos(u), R * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[-1 / R, 0], [0, 0]])
     assert_matrix_equal(S, expected)
 
@@ -82,6 +85,7 @@ def test_shape_cylinder_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
     X = [a * sp.cos(u), a * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[-1 / a, 0], [0, 0]])
     assert_matrix_equal(S, expected)
@@ -101,6 +105,7 @@ def test_shape_sphere_numeric():
     X = [R * sp.sin(u) * sp.cos(v), R * sp.sin(u) * sp.sin(v), R * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[-1 / R, 0], [0, -1 / R]])
     assert_matrix_equal(S, expected)
 
@@ -110,6 +115,7 @@ def test_shape_sphere_symbolic():
     a = sp.symbols("a", positive=True, real=True)
     X = [a * sp.sin(u) * sp.cos(v), a * sp.sin(u) * sp.sin(v), a * sp.cos(u)]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[-1 / a, 0], [0, -1 / a]])
     assert_matrix_equal(S, expected)
@@ -135,6 +141,7 @@ def test_shape_torus_numeric():
     ]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[-sp.cos(v) / (R + r * sp.cos(v)), 0], [0, -1 / r]])
     assert_matrix_equal(S, expected)
 
@@ -148,6 +155,7 @@ def test_shape_torus_symbolic():
         b * sp.sin(v),
     ]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[-sp.cos(v) / (a + b * sp.cos(v)), 0], [0, -1 / b]])
     assert_matrix_equal(S, expected)
@@ -166,6 +174,7 @@ def test_shape_paraboloid_numeric():
     X = [u, v, u**2 + v**2]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     factor = 2 / ((1 + 4 * u**2 + 4 * v**2) ** (3 / 2))
     expected = sp.Matrix(
         factor * sp.Matrix([[1 + 4 * v**2, -4 * u * v], [-4 * u * v, 1 + 4 * u**2]])
@@ -179,6 +188,7 @@ def test_shape_paraboloid_symbolic():
     a, b = sp.symbols("a b", positive=True, real=True)
     X = [u, v, a * u**2 + b * v**2]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     factor = 2 / ((1 + 4 * a**2 * u**2 + 4 * b**2 * v**2) ** (3 / 2))
     expected = sp.Matrix(
@@ -205,6 +215,7 @@ def test_shape_hyperbolic_paraboloid_numeric():
     X = [u, v, u**2 - v**2]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     expected = sp.simplify(
         sp.Matrix(
             [
@@ -228,6 +239,7 @@ def test_shape_hyperbolic_paraboloid_symbolic():
     a, b = sp.symbols("a b", positive=True, real=True)
     X = [u, v, a * u**2 - b * v**2]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     expected = sp.simplify(
         sp.Matrix(
@@ -275,6 +287,7 @@ def test_shape_elliptic_surface_numeric():
 
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     assert_matrix_equal(S, expected)
 
 
@@ -300,6 +313,7 @@ def test_shape_elliptic_surface_symbolic():
 
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     assert_matrix_equal(S, expected)
 
 
@@ -316,6 +330,7 @@ def test_shape_catenoid_numeric():
     X = [sp.cosh(v) * sp.cos(u), sp.cosh(v) * sp.sin(u), v]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[-1 / sp.cosh(v) ** 2, 0], [0, 1 / sp.cosh(v) ** 2]])
     assert_matrix_equal(S, expected)
 
@@ -325,6 +340,7 @@ def test_shape_catenoid_symbolic():
     a, b = sp.symbols("a b", positive=True, real=True)
     X = [a * sp.cosh(v) * sp.cos(u), a * sp.cosh(v) * sp.sin(u), b * v]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix(
         [
@@ -347,6 +363,7 @@ def test_shape_helicoid_numeric():
     X = [u * sp.cos(v), u * sp.sin(v), v]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix([[0, -1 / sp.sqrt(1 + u**2)], [-1 / (1 + u**2) ** (3 / 2), 0]])
     assert_matrix_equal(S, expected)
 
@@ -356,6 +373,7 @@ def test_shape_helicoid_symbolic():
     a, b = sp.symbols("a b", positive=True, real=True)
     X = [a * u * sp.cos(v), a * u * sp.sin(v), b * v]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     expected = sp.Matrix(
         [
@@ -388,6 +406,7 @@ def test_shape_weird_surface_numeric():
     X = [u**2 * v, u * v**2, sp.exp(u + v)]
     X = parse_input(str(X), str([u, v]))
     S, _ = compute_shape_operator(X, [u, v])
+    S, _ = compute_shape_operator(X, [u, v])
     assert_matrix_equal(S, expected)
 
 
@@ -408,5 +427,6 @@ def test_shape_weird_surface_symbolic():
 
     X = [a * u**2 * v, b * u * v**2, sp.exp(a * u + b * v)]
     X = parse_input(str(X), str([u, v]))
+    S, _ = compute_shape_operator(X, [u, v])
     S, _ = compute_shape_operator(X, [u, v])
     assert_matrix_equal(S, expected)

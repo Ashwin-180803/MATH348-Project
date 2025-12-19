@@ -59,7 +59,9 @@ const surfaceDefaults = {
         u: "u",
         v: "v",
         x: "cos(v) * sin(u)",
+        x: "cos(v) * sin(u)",
         y: "sin(u) * sin(v)",
+        z: "cos(u)"
         z: "cos(u)"
     },
 

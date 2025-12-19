@@ -65,6 +65,7 @@ def test_frenet_circle_numeric():
 
     X = [R * sp.cos(t), R * sp.sin(t), 0]
     res, _ = compute_frenet_serret_apparatus(X, t)
+    res, _ = compute_frenet_serret_apparatus(X, t)
 
     T_expected = sp.Matrix([-sp.sin(t), sp.cos(t), 0])
     N_expected = sp.Matrix([-sp.cos(t), -sp.sin(t), 0])
@@ -83,6 +84,7 @@ def test_frenet_circle_symbolic():
     a = sp.symbols("a", real=True, positive=True)
 
     X = [a * sp.cos(t), a * sp.sin(t), 0]
+    res, _ = compute_frenet_serret_apparatus(X, t)
     res, _ = compute_frenet_serret_apparatus(X, t)
 
     T_expected = sp.Matrix([-sp.sin(t), sp.cos(t), 0])
@@ -108,6 +110,7 @@ def test_frenet_sphere_meridian_numeric():
 
     X = [R * sp.sin(t), 0, R * sp.cos(t)]
     res, _ = compute_frenet_serret_apparatus(X, t)
+    res, _ = compute_frenet_serret_apparatus(X, t)
 
     T_expected = sp.Matrix([sp.cos(t), 0, -sp.sin(t)])
     N_expected = sp.Matrix([-sp.sin(t), 0, -sp.cos(t)])
@@ -126,6 +129,7 @@ def test_frenet_sphere_meridian_symbolic():
     a = sp.symbols("a", real=True, positive=True)
 
     X = [a * sp.sin(t), 0, a * sp.cos(t)]
+    res, _ = compute_frenet_serret_apparatus(X, t)
     res, _ = compute_frenet_serret_apparatus(X, t)
 
     T_expected = sp.Matrix([sp.cos(t), 0, -sp.sin(t)])
@@ -151,6 +155,7 @@ def test_frenet_helix_numeric():
 
     X = [sp.cos(t), sp.sin(t), b * t]
     res, _ = compute_frenet_serret_apparatus(X, t)
+    res, _ = compute_frenet_serret_apparatus(X, t)
 
     v = sp.sqrt(1 + b**2)
 
@@ -172,6 +177,7 @@ def test_frenet_helix_symbolic():
     a, b = sp.symbols("a b", real=True, positive=True)
 
     X = [a * sp.cos(t), a * sp.sin(t), b * t]
+    res, _ = compute_frenet_serret_apparatus(X, t)
     res, _ = compute_frenet_serret_apparatus(X, t)
 
     v = sp.sqrt(a**2 + b**2)
