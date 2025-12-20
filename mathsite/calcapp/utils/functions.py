@@ -642,7 +642,7 @@ def compute_arc_length(parametrization, parameter, bounds):
     # Step 1 - Compute the derivative of the parametrization
     X_t = sp.Matrix([parametrization.diff(parameter)])
     steps["1"] = [X_t]
-    
+
     # Step 2 - Compute the magnitude of the derivative and simplify
     magnitude = X_t.norm()
 
@@ -652,7 +652,7 @@ def compute_arc_length(parametrization, parameter, bounds):
 
     # Step 3 - Integrate magnitude to get the arc length and simplify
     arc_length_integral = sp.Integral(magnitude, (parameter, bounds[0], bounds[1]))
-    
+
     try:  # In case the integral is too hard
         arc_length = func_timeout(6, arc_length_integral.doit)
     except FunctionTimedOut:
@@ -688,7 +688,7 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
 
     # Step 1 - Compute arc length
     arc_length, _ = compute_arc_length(parametrization, parameter, bounds)
-    
+
     if isinstance(arc_length, dict):
         return arc_length  # Return the dict with message if integral failed
 
@@ -810,7 +810,13 @@ def compute_surface_area(parametrization, parameters, u_bounds, v_bounds):
     return surface_area, steps
 
 
+<<<<<<< HEAD
 def compute_frenet_serret_apparatus(parametrization, parameter, allow_straight_lines=False):
+=======
+def compute_frenet_serret_apparatus(
+    parametrization, parameter, allow_straight_lines=False
+):
+>>>>>>> a102a22884c7a05c7cda2f282df0f5f7923935ad
     """
     Calculate the Frenet-Serret apparatus of a curve given its parametrization.
 
@@ -848,7 +854,6 @@ def compute_frenet_serret_apparatus(parametrization, parameter, allow_straight_l
     # Step 3 - Find second derivative (acceleration)
     X_tt = Matrix([sp.diff(coord, parameter) for coord in X_t])
     X_tt = sp.simplify(X_tt)
-    
 
     if all(sp.simplify(coord) == 0 for coord in X_tt):
         if not allow_straight_lines:
