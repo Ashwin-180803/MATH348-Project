@@ -58,10 +58,8 @@ const surfaceDefaults = {
     sphere: {
         u: "u",
         v: "v",
-        x: "cos(v) * sin(u)",
-        x: "cos(v) * sin(u)",
+        x: "sin(u) * cos(v)",
         y: "sin(u) * sin(v)",
-        z: "cos(u)"
         z: "cos(u)"
     },
 
@@ -146,7 +144,7 @@ document.getElementById("surface").addEventListener("change", () => {
     const uszEl = document.getElementById("usz");
 
     if (!usEl || !vsEl || !usxEl || !usyEl || !uszEl) {
-        
+
         return;
     }
 
@@ -167,7 +165,7 @@ document.getElementById("surface").addEventListener("change", () => {
         usyEl.value = def.y || "v";
         uszEl.value = def.z || "0";
     } else {
-        
+
         usEl.value = "u";
         vsEl.value = "v";
         usxEl.value = "u";
