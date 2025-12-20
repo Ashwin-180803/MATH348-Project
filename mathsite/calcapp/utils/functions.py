@@ -695,7 +695,6 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
     steps["1"] = [arc_length]
 
     # Step 2 - Solve for t in terms of s
-
     s_dummy = sp.Dummy("s", real=True)
     equation = sp.Eq(arc_length, s_dummy)
     t_in_terms_of_s = sp.solve(equation, parameter)[0]
