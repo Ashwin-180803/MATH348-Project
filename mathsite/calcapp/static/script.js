@@ -112,20 +112,29 @@ surfaceQuantityTabs.forEach((tab) => {
 function enforceCurveQuantityConstraints() {
   if (!curveSelect || !quantitySelect) return;
 
-  const lineOption = Array.from(curveSelect.options || []).find(
-    (opt) => opt.value === "line"
-  );
+  const options = Array.from(curveSelect.options || []);
   const blockLine = quantitySelect.value === "frenet";
+  const blockArcLength = quantitySelect.value === "reparam_arc_length";
+  const arcLengthUnsupported = new Set([
+    "ellipse",
+    "tractrix",
+    "cycloid",
+    "twisted_cubic",
+    "catenary",
+    "hyperbola",
+  ]); // lacks closed-form reparam or known issues
 
-  if (lineOption) {
-    lineOption.disabled = blockLine;
-    lineOption.hidden = blockLine;
-  }
+  options.forEach((opt) => {
+    const shouldHide =
+      (blockLine && opt.value === "line") ||
+      (blockArcLength && arcLengthUnsupported.has(opt.value));
+    opt.disabled = shouldHide;
+    opt.hidden = shouldHide;
+  });
 
-  if (blockLine && curveSelect.value === "line") {
-    const fallback = Array.from(curveSelect.options || []).find(
-      (opt) => opt.value !== "line" && !opt.disabled && !opt.hidden
-    );
+  const selected = options.find((opt) => opt.value === curveSelect.value);
+  if (selected && (selected.disabled || selected.hidden)) {
+    const fallback = options.find((opt) => !opt.disabled && !opt.hidden);
     if (fallback) {
       curveSelect.value = fallback.value;
       curveSelect.dispatchEvent(new Event("change"));
@@ -149,14 +158,19 @@ const paramTemplates = {
   cycloid: [],
   twisted_cubic: [],
   catenary: [],
-  catenary: [],
   hyperbola: [],
   tractrix: [],
 };
 
+function getCurveParamDefaults(curve) {
+  const defaults = {};
+  (paramTemplates[curve] || []).forEach(([name, val]) => {
+    defaults[name] = val;
+  });
+  return defaults;
+}
+
 const surfaceTemplates = {
-  sphere: [],
-  torus: [],
   sphere: [],
   torus: [],
   paraboloid: [],
@@ -270,31 +284,7 @@ function renderCurveParams(curve) {
 
 
   if (curve === "line") {
-    const defaults = {};
-    (paramTemplates.line || []).forEach(([name, val]) => {
-      defaults[name] = val;
-    });
-
-    curveParamsDiv.innerHTML = `
-      <div class="param-row">
-        <label>x-range:</label>
-        <input id="param_x0" value="${defaults.x0 ?? "0"}"> 
-        <span class="inline-label">to</span>
-        <input id="param_x1" value="${defaults.x1 ?? "1"}">
-      </div>
-      <div class="param-row">
-        <label>y-range:</label>
-        <input id="param_y0" value="${defaults.y0 ?? "0"}"> 
-        <span class="inline-label">to</span>
-        <input id="param_y1" value="${defaults.y1 ?? "0"}">
-      </div>
-      <div class="param-row">
-        <label>z-range:</label>
-        <input id="param_z0" value="${defaults.z0 ?? "0"}"> 
-        <span class="inline-label">to</span>
-        <input id="param_z1" value="${defaults.z1 ?? "0"}">
-      </div>
-    `;
+    curveParamsDiv.innerHTML = `<em style="color:#666;">Uses fixed defaults.</em>`;
     updateCurveParamDisplay();
     return;
   }
@@ -457,8 +447,9 @@ if (computeBtn) {
         z: coord3El && coord3El.value.trim() ? coord3El.value.trim() : "0",
       };
 
-      
-      if (curve === "line" || curve === "custom_curve") {
+      if (curve === "line") {
+        params = { ...params, ...getCurveParamDefaults("line") };
+      } else if (curve === "custom_curve") {
         const inputs = curveParamsDiv.querySelectorAll("input");
         inputs.forEach((inp) => {
           const name = inp.id.replace("param_", "");

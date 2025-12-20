@@ -351,6 +351,7 @@ def compute(request):
                 {
                     "ok": True,
                     "mode": "curve",
+                    "has_arbitrary_constants": has_arbitrary_constants,
                     "t": t.tolist(),
                     "x": R[:, 0].tolist(),
                     "y": R[:, 1].tolist(),
@@ -847,6 +848,7 @@ def compute(request):
                     {
                         "ok": True,
                         "mode": "surface",
+                        "has_arbitrary_constants": False,
                         "X": X_list,
                         "Y": Y_list,
                         "Z": Z_list,

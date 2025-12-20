@@ -642,7 +642,7 @@ def compute_arc_length(parametrization, parameter, bounds):
     # Step 1 - Compute the derivative of the parametrization
     X_t = sp.Matrix([parametrization.diff(parameter)])
     steps["1"] = [X_t]
-
+    
     # Step 2 - Compute the magnitude of the derivative and simplify
     magnitude = X_t.norm()
 
@@ -652,7 +652,7 @@ def compute_arc_length(parametrization, parameter, bounds):
 
     # Step 3 - Integrate magnitude to get the arc length and simplify
     arc_length_integral = sp.Integral(magnitude, (parameter, bounds[0], bounds[1]))
-
+    
     try:  # In case the integral is too hard
         arc_length = func_timeout(6, arc_length_integral.doit)
     except FunctionTimedOut:
@@ -688,7 +688,7 @@ def compute_arc_length_reparametrization(parametrization, parameter, bounds):
 
     # Step 1 - Compute arc length
     arc_length, _ = compute_arc_length(parametrization, parameter, bounds)
-
+    
     if isinstance(arc_length, dict):
         return arc_length  # Return the dict with message if integral failed
 
@@ -809,9 +809,7 @@ def compute_surface_area(parametrization, parameters, u_bounds, v_bounds):
     return surface_area, steps
 
 
-def compute_frenet_serret_apparatus(
-    parametrization, parameter, allow_straight_lines=False
-):
+def compute_frenet_serret_apparatus(parametrization, parameter, allow_straight_lines=False):
     """
     Calculate the Frenet-Serret apparatus of a curve given its parametrization.
 
@@ -849,6 +847,7 @@ def compute_frenet_serret_apparatus(
     # Step 3 - Find second derivative (acceleration)
     X_tt = Matrix([sp.diff(coord, parameter) for coord in X_t])
     X_tt = sp.simplify(X_tt)
+    
 
     if all(sp.simplify(coord) == 0 for coord in X_tt):
         if not allow_straight_lines:
@@ -1401,86 +1400,86 @@ def get_computation_steps(computation_type, parametrization=None, parameters=Non
 
     if computation_type == "arc_length":
         steps = [
-            "Step 1: Compute the derivative of the parametrization",
-            "Step 2: Compute the magnitude of the derivative",
-            "Step 3: Integrate magnitude to get the arc length",
+            "Compute the derivative of the parametrization",
+            "Compute the magnitude of the derivative",
+            "Integrate magnitude to get the arc length",
         ]
 
     elif computation_type == "reparam_arc_length":
         steps = [
-            "Step 1: Compute arc length",
-            "Step 2: Solve for t in terms of s",
-            "Step 3: Substitute t back into the parametrization",
+            "Compute arc length",
+            "Solve for t in terms of s",
+            "Substitute t back into the parametrization",
         ]
 
     elif computation_type == "frenet":
         steps = [
-            "Step 1: Find first derivative (velocity)",
-            "Step 2: Find unit tangent vector T",
-            "Step 3: Find second derivative (acceleration)",
-            "Step 4: Find curvature kappa",
-            "Step 5: Find normal vector N",
-            "Step 6: Find binormal B",
-            "Step 7: Find torsion tau",
+            "Find first derivative (velocity)",
+            "Find unit tangent vector T",
+            "Find second derivative (acceleration)",
+            "Find curvature kappa",
+            "Find normal vector N",
+            "Find binormal B",
+            "Find torsion tau",
         ]
 
     elif computation_type == "first_form":
         steps = [
-            "Step 1: Compute the partial derivatives",
-            "Step 2: Compute the coefficients of the first fundamental form using dot product",
-            "Step 3: Construct the first fundamental form matrix",
+            "Compute the partial derivatives",
+            "Compute the coefficients of the first fundamental form using dot product",
+            "Construct the first fundamental form matrix",
         ]
 
     elif computation_type == "second_form":
         steps = [
-            "Step 1: Compute the partial derivatives",
-            "Step 2: Compute the unit normal vector",
-            "Step 3: Compute the coefficients of the second fundamental form using dot product",
-            "Step 4: Construct the second fundamental form matrix",
+            "Compute the partial derivatives",
+            "Compute the unit normal vector",
+            "Compute the coefficients of the second fundamental form using dot product",
+            "Construct the second fundamental form matrix",
         ]
 
     elif computation_type == "gaussian_curvature":
         steps = [
-            "Step 1: Compute the shape operator matrix",
-            "Step 2: Compute Gaussian curvature using determinant of shape operator",
+            "Compute the shape operator matrix",
+            "Compute Gaussian curvature using determinant of shape operator",
         ]
 
     elif computation_type == "mean_curvature":
         steps = [
-            "Step 1: Compute the shape operator matrix",
-            "Step 2: Compute mean curvature as half the trace of the shape operator",
+            "Compute the shape operator matrix",
+            "Compute mean curvature as half the trace of the shape operator",
         ]
 
     elif computation_type == "principal_curvatures":
         steps = [
-            "Step 1: Compute the first fundamental form matrix",
-            "Step 2: Compute the second fundamental form matrix",
-            "Step 3: Compute the inverse of the first fundamental form matrix",
-            "Step 4: Compute the shape operator as the product of I_inv and II",
+            "Compute the first fundamental form matrix",
+            "Compute the second fundamental form matrix",
+            "Compute the inverse of the first fundamental form matrix",
+            "Compute the shape operator as the product of I_inv and II",
         ]
 
     elif computation_type == "christoffel":
         steps = [
-            "Step 1: Compute the first fundamental form matrix",
-            "Step 2: Compute partial derivatives",
-            "Step 3: Compute the inverse of the first fundamental form matrix and multipliers for each pair of Christoffel symbols",
-            "Step 4: Compute the Christoffel symbols with matrix multiplication",
+            "Compute the first fundamental form matrix",
+            "Compute partial derivatives",
+            "Compute the inverse of the first fundamental form matrix and multipliers for each pair of Christoffel symbols",
+            "Compute the Christoffel symbols with matrix multiplication",
         ]
 
     elif computation_type == "gauss_equations":
         steps = [
-            "Step 1: Compute the first fundamental form matrix",
-            "Step 2: Compute the second fundamental form matrix",
-            "Step 3: Compute the Christoffel symbols",
-            "Step 4: Compute partial derivatives of Christoffel symbols",
-            "Step 5: Compute the Gauss equations",
+            "Compute the first fundamental form matrix",
+            "Compute the second fundamental form matrix",
+            "Compute the Christoffel symbols",
+            "Compute partial derivatives of Christoffel symbols",
+            "Compute the Gauss equations",
         ]
 
     elif computation_type == "codazzi_equations":
         steps = [
-            "Step 1: Compute the second fundamental form matrix",
-            "Step 2: Compute the Christoffel symbols",
-            "Step 3: Compute the Codazzi equations",
+            "Compute the second fundamental form matrix",
+            "Compute the Christoffel symbols",
+            "Compute the Codazzi equations",
         ]
 
     return steps
